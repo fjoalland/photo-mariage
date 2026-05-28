@@ -5,262 +5,645 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Partagez vos photos</title>
 
-<!-- Police élégante et sobre (CDN gratuit Google Fonts) -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500&family=Caveat:wght@500;600&display=swap" rel="stylesheet" />
 
 <style>
   /* ============================================================
-     PALETTE & THÈME — douce, chaleureuse, mariage
+     PALETTES — toutes en "élégance classique" sépia / ivoire
      ============================================================ */
+  :root,
+  [data-palette="sepia"] {
+    --bg-1:    #f6efe3;    /* fond principal chaud */
+    --bg-2:    #ede2cf;    /* fond dégradé bas */
+    --paper:   #fdfaf3;    /* surface carte */
+    --ink:     #3b342c;    /* texte principal */
+    --ink-2:   #6b5e51;    /* texte secondaire */
+    --muted:   #a89684;    /* texte tertiaire */
+    --accent:  #b48a55;    /* doré / sable */
+    --accent-d:#8a6334;    /* doré foncé */
+    --line:    #d9c9b1;    /* filets décoratifs */
+    --border:  #e7dbc6;    /* bords cartes */
+    --success: #7e8d6d;
+    --error:   #b96b62;
+  }
+  [data-palette="sauge"] {
+    --bg-1:    #f3f0e6;
+    --bg-2:    #e6e5d3;
+    --paper:   #fbfaf3;
+    --ink:     #2f3a30;
+    --ink-2:   #5b6a5a;
+    --muted:   #97a293;
+    --accent:  #8a9a82;
+    --accent-d:#5e7158;
+    --line:    #c9d3bf;
+    --border:  #dde2cf;
+    --success: #5e7158;
+    --error:   #b96b62;
+  }
+  [data-palette="albatre"] {
+    --bg-1:    #f4f1ec;
+    --bg-2:    #e8e3dc;
+    --paper:   #fdfcf9;
+    --ink:     #2a2622;
+    --ink-2:   #5a544c;
+    --muted:   #998f82;
+    --accent:  #a48a64;
+    --accent-d:#6e5839;
+    --line:    #d7cdbf;
+    --border:  #e2dbcf;
+    --success: #6f8770;
+    --error:   #b96b62;
+  }
+  [data-palette="terre"] {
+    --bg-1:    #f3e8da;
+    --bg-2:    #e9d6bd;
+    --paper:   #fcf6ec;
+    --ink:     #3b2a20;
+    --ink-2:   #6f4e3c;
+    --muted:   #ad8b73;
+    --accent:  #b7704a;
+    --accent-d:#8a4a25;
+    --line:    #dec1a1;
+    --border:  #ecd6ba;
+    --success: #7e8d6d;
+    --error:   #b96b62;
+  }
+
   :root {
-    --cream:   #faf6f0;   /* fond crème */
-    --card:    #ffffff;   /* cartes */
-    --ink:     #4a4039;   /* texte principal (brun doux) */
-    --muted:   #9a8f84;   /* texte secondaire */
-    --blush:   #c9a37a;   /* accent doré / sable */
-    --blush-d: #b08856;   /* accent foncé */
-    --sage:    #8a9a82;   /* vert tendre (succès) */
-    --border:  #ece3d8;   /* bordures discrètes */
-    --error:   #c0726b;   /* rouge doux (erreurs) */
-    --radius:  16px;
-    --shadow:  0 10px 30px rgba(120, 95, 65, .10);
+    --radius:  14px;
+    --shadow:  0 1px 0 rgba(0,0,0,.02), 0 24px 60px -28px rgba(80,55,25,.22);
+    --serif: 'Cormorant Garamond', 'EB Garamond', Georgia, serif;
+    --sans:  'Jost', system-ui, -apple-system, sans-serif;
+    --hand:  'Caveat', cursive;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
 
   body {
-    font-family: 'Jost', system-ui, -apple-system, sans-serif;
+    font-family: var(--sans);
     color: var(--ink);
     background:
-      radial-gradient(900px 500px at 50% -10%, #fff 0%, transparent 60%),
-      linear-gradient(180deg, var(--cream) 0%, #f3ece2 100%);
+      radial-gradient(1100px 600px at 50% -8%, #fff8ea 0%, transparent 55%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    background-attachment: fixed;
     min-height: 100dvh;
-    line-height: 1.55;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
-    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+    padding: env(safe-area-inset-top) 18px env(safe-area-inset-bottom);
+    overflow-x: hidden;
+    transition: background .5s ease, color .35s ease;
+  }
+
+  /* Texture grain très subtile — purement décorative */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.36  0 0 0 0 0.25  0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    opacity: .55; mix-blend-mode: multiply; z-index: 0;
   }
 
   .wrap {
-    max-width: 560px;
+    position: relative; z-index: 1;
+    max-width: 580px;
     margin: 0 auto;
-    padding: 28px 0 48px;
+    padding: 36px 0 56px;
   }
 
-  /* ---------- En-tête ---------- */
-  header { text-align: center; margin-bottom: 26px; }
+  /* ============================================================
+     EN-TÊTE ÉDITORIAL
+     ============================================================ */
+  header {
+    text-align: center;
+    margin-bottom: 22px;
+    animation: rise .9s cubic-bezier(.2,.7,.2,1) both;
+  }
+
+  .ornament {
+    display: flex; align-items: center; justify-content: center;
+    gap: 14px; margin-bottom: 18px;
+    color: var(--accent);
+    font-family: var(--serif);
+  }
+  .ornament::before,
+  .ornament::after {
+    content: ""; display: block; height: 1px; width: 38px;
+    background: linear-gradient(90deg, transparent, var(--line), transparent);
+  }
+  .ornament-mark {
+    font-size: 11px; letter-spacing: 6px; text-transform: uppercase;
+    transform: translateY(-1px);
+  }
+
   .monogram {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 15px; letter-spacing: 3px; text-transform: uppercase;
-    color: var(--blush-d); margin-bottom: 10px;
-  }
-  h1 {
-    font-family: 'Cormorant Garamond', serif;
-    font-weight: 600; font-size: clamp(30px, 9vw, 44px);
-    line-height: 1.1; color: var(--ink);
-  }
-  .date {
-    margin-top: 8px; font-size: 14px; letter-spacing: 1px;
-    color: var(--muted); text-transform: uppercase;
-  }
-  .rule {
-    width: 56px; height: 1px; background: var(--blush);
-    margin: 18px auto 0; opacity: .7;
-  }
-  .lead {
-    margin-top: 16px; font-size: 16px; color: var(--muted);
-    max-width: 40ch; margin-left: auto; margin-right: auto;
+    font-family: var(--serif);
+    font-style: italic; font-weight: 500;
+    font-size: 18px; letter-spacing: 2px;
+    color: var(--ink-2);
+    margin-bottom: 14px;
   }
 
-  /* ---------- Carte ---------- */
+  h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(38px, 11vw, 58px);
+    line-height: 1; color: var(--ink);
+    letter-spacing: -.01em;
+  }
+  h1 .amp {
+    font-style: italic; font-weight: 400;
+    color: var(--accent-d);
+    margin: 0 .12em;
+    font-size: 1.05em;
+  }
+  h1 .first, h1 .second { display: inline-block; }
+
+  .date {
+    margin-top: 18px;
+    font-family: var(--sans);
+    font-size: 12px; letter-spacing: 4px;
+    color: var(--ink-2); text-transform: uppercase;
+  }
+  .date .dot {
+    display: inline-block; width: 3px; height: 3px; border-radius: 50%;
+    background: var(--accent); vertical-align: middle;
+    margin: 0 8px 2px;
+  }
+
+  /* ============================================================
+     MOT DES MARIÉS
+     ============================================================ */
+  .welcome {
+    margin: 30px auto 24px;
+    text-align: center;
+    max-width: 460px;
+    animation: rise 1s .15s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .welcome-quote {
+    position: relative;
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(18px, 4.6vw, 21px);
+    line-height: 1.5;
+    color: var(--ink-2);
+    text-wrap: pretty;
+    padding: 0 12px;
+  }
+  .welcome-quote::before,
+  .welcome-quote::after {
+    font-family: var(--serif);
+    color: var(--accent);
+    font-size: 2.4em;
+    line-height: 0;
+    position: relative;
+    opacity: .55;
+  }
+  .welcome-quote::before { content: "“"; margin-right: 4px; top: .25em; }
+  .welcome-quote::after  { content: "”"; margin-left: 4px; top: .35em; }
+
+  .signature {
+    margin-top: 18px;
+    font-family: var(--hand);
+    font-size: 26px;
+    color: var(--accent-d);
+    letter-spacing: .5px;
+  }
+
+  /* ============================================================
+     CARTE FORMULAIRE
+     ============================================================ */
   .card {
-    background: var(--card);
+    background: var(--paper);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    padding: 22px;
-    margin-top: 22px;
+    padding: 26px 22px 24px;
+    margin-top: 6px;
+    animation: rise 1s .3s cubic-bezier(.2,.7,.2,1) both;
   }
 
-  label.field-label {
-    display: block; font-size: 13px; letter-spacing: .5px;
-    color: var(--muted); margin-bottom: 7px;
+  .card-title {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+    text-align: center;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .card-sub {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: .3px;
+    margin-bottom: 22px;
+  }
+
+  .field {
+    margin-bottom: 16px;
+  }
+  .field-label {
+    display: block;
+    font-size: 11px; letter-spacing: 2.4px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 9px;
+    font-weight: 500;
+  }
+  .field-label .opt {
+    text-transform: none; letter-spacing: 0; opacity: .7;
+    font-style: italic; font-family: var(--serif); font-size: 13px;
+    margin-left: 4px;
   }
   input[type="text"] {
-    width: 100%; padding: 13px 14px; font: inherit; color: var(--ink);
-    background: #fff; border: 1px solid var(--border); border-radius: 12px;
-    transition: border-color .15s, box-shadow .15s;
+    width: 100%; padding: 14px 16px; font: inherit; color: var(--ink);
+    background: #fff; border: 1px solid var(--border); border-radius: 10px;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    font-size: 16px; /* iOS no-zoom */
   }
+  input[type="text"]::placeholder { color: var(--muted); opacity: .8; }
   input[type="text"]:focus {
-    outline: none; border-color: var(--blush);
-    box-shadow: 0 0 0 3px rgba(201,163,122,.18);
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
   }
 
-  /* ---------- Zone de sélection des fichiers ---------- */
+  /* ---------- Picker ---------- */
   .picker {
-    margin-top: 18px;
+    margin-top: 6px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 8px; text-align: center;
-    padding: 26px 18px;
-    border: 1.5px dashed var(--blush);
-    border-radius: 14px;
-    background: #fdfaf5;
+    gap: 10px; text-align: center;
+    padding: 30px 18px;
+    border: 1.5px dashed var(--accent);
+    border-radius: 12px;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, var(--paper)) 0%, var(--paper) 100%);
     cursor: pointer;
-    transition: background .15s, border-color .15s;
+    transition: transform .15s ease, background .2s, border-color .2s, box-shadow .25s;
+    position: relative;
+    overflow: hidden;
   }
-  .picker:active { background: #f7efe3; }
-  .picker .ico { font-size: 30px; }
-  .picker .big { font-size: 16px; color: var(--ink); }
-  .picker .small { font-size: 13px; color: var(--muted); }
+  .picker:hover { background: color-mix(in srgb, var(--accent) 8%, var(--paper)); }
+  .picker:active { transform: scale(.985); }
+  .picker .picker-ico {
+    width: 46px; height: 46px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent-d);
+    transition: transform .3s ease;
+  }
+  .picker:hover .picker-ico { transform: translateY(-2px) rotate(-3deg); }
+  .picker .picker-ico svg { width: 22px; height: 22px; stroke-width: 1.4; }
+  .picker .picker-big {
+    font-family: var(--serif);
+    font-size: 19px; font-weight: 500;
+    color: var(--ink);
+  }
+  .picker .picker-small {
+    font-size: 13px; color: var(--muted);
+  }
   input[type="file"] { display: none; }
 
-  /* ---------- Galerie d'aperçus ---------- */
+  /* ---------- Galerie ---------- */
   .grid {
-    margin-top: 16px;
+    margin-top: 18px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
     gap: 10px;
   }
   .thumb {
-    position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden;
-    background: #f0e9df; border: 1px solid var(--border);
+    position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden;
+    background: var(--bg-1); border: 1px solid var(--border);
+    animation: pop .35s cubic-bezier(.2,.7,.2,1.2) both;
   }
   .thumb img, .thumb video {
     width: 100%; height: 100%; object-fit: cover; display: block;
   }
   .thumb .vid-badge {
-    position: absolute; left: 6px; bottom: 6px; font-size: 11px;
-    background: rgba(0,0,0,.55); color: #fff; padding: 2px 7px; border-radius: 20px;
+    position: absolute; left: 6px; bottom: 6px; font-size: 10px;
+    background: rgba(0,0,0,.55); color: #fff; padding: 3px 8px; border-radius: 20px;
+    letter-spacing: .5px;
   }
   .thumb .rm {
-    position: absolute; top: 5px; right: 5px; width: 24px; height: 24px;
-    border: none; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff;
-    font-size: 15px; line-height: 24px; cursor: pointer; padding: 0;
+    position: absolute; top: 5px; right: 5px;
+    width: 26px; height: 26px;
+    border: none; border-radius: 50%;
+    background: rgba(0,0,0,.6); color: #fff;
+    font-size: 15px; line-height: 26px; cursor: pointer; padding: 0;
+    transition: background .15s, transform .15s;
   }
-  /* Voile d'état (progression / succès / erreur) sur la vignette */
+  .thumb .rm:hover { background: rgba(0,0,0,.78); transform: scale(1.08); }
   .thumb .veil {
     position: absolute; inset: 0; display: none;
     align-items: center; justify-content: center;
-    font-size: 22px; color: #fff; background: rgba(74,64,57,.55);
+    font-size: 22px; color: #fff; background: rgba(60,48,38,.55);
+    backdrop-filter: blur(2px);
   }
   .thumb[data-state="uploading"] .veil { display: flex; }
-  .thumb[data-state="done"]      .veil { display: flex; background: rgba(138,154,130,.78); }
-  .thumb[data-state="error"]     .veil { display: flex; background: rgba(192,114,107,.80); }
-  /* Petit spinner affiché pendant l'envoi du fichier */
+  .thumb[data-state="done"]      .veil { display: flex; background: color-mix(in srgb, var(--success) 80%, #000 0%); opacity: .82; }
+  .thumb[data-state="error"]     .veil { display: flex; background: color-mix(in srgb, var(--error) 82%, #000 0%); }
   .thumb .spin {
     width: 22px; height: 22px; border-radius: 50%;
-    border: 3px solid rgba(255,255,255,.45); border-top-color: #fff;
+    border: 2.5px solid rgba(255,255,255,.35); border-top-color: #fff;
     animation: spin .8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(.85); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 
   /* ---------- Bouton ---------- */
   .btn {
-    width: 100%; margin-top: 20px; padding: 15px 18px;
-    font: inherit; font-size: 16px; letter-spacing: .4px; font-weight: 500;
-    color: #fff; background: var(--blush-d);
-    border: none; border-radius: 12px; cursor: pointer;
-    transition: filter .15s, transform .05s;
+    width: 100%; margin-top: 20px;
+    padding: 16px 18px;
+    font: inherit; font-size: 14px; letter-spacing: 3px; text-transform: uppercase;
+    font-weight: 500;
+    color: #fff;
+    background: var(--accent-d);
+    border: none; border-radius: 10px; cursor: pointer;
+    transition: filter .15s, transform .08s, box-shadow .2s, background .2s;
+    box-shadow: 0 8px 22px -10px color-mix(in srgb, var(--accent-d) 70%, transparent);
+    min-height: 52px;
   }
-  .btn:hover:not(:disabled) { filter: brightness(1.05); }
+  .btn:hover:not(:disabled) { filter: brightness(1.08); box-shadow: 0 12px 26px -10px color-mix(in srgb, var(--accent-d) 80%, transparent); }
   .btn:active:not(:disabled) { transform: translateY(1px); }
-  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
   .btn.secondary {
-    background: transparent; color: var(--blush-d);
-    border: 1px solid var(--blush); margin-top: 12px;
+    background: transparent; color: var(--accent-d);
+    border: 1px solid var(--accent);
+    box-shadow: none;
+    margin-top: 10px;
+  }
+  .btn.secondary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
   }
 
-  /* ---------- Progression globale ---------- */
+  /* ---------- Progression ---------- */
   .progress { margin-top: 18px; display: none; }
   .progress.show { display: block; }
   .progress .bar {
-    height: 10px; background: #efe7db; border-radius: 20px; overflow: hidden;
+    height: 8px; background: color-mix(in srgb, var(--accent) 12%, var(--paper));
+    border-radius: 20px; overflow: hidden;
+    border: 1px solid var(--border);
   }
   .progress .fill {
     height: 100%; width: 0%; border-radius: 20px;
-    background: linear-gradient(90deg, var(--blush), var(--blush-d));
-    transition: width .25s ease;
+    background: linear-gradient(90deg, var(--accent), var(--accent-d));
+    transition: width .35s ease;
   }
   .progress .txt {
-    margin-top: 8px; font-size: 13px; color: var(--muted); text-align: center;
+    margin-top: 10px; font-size: 12px; color: var(--ink-2);
+    text-align: center;
+    letter-spacing: 1.5px; text-transform: uppercase;
   }
-  /* Pulsation de la barre pendant l'envoi (la progression avance fichier par fichier) */
-  .progress.busy .fill { animation: pulse 1.1s ease-in-out infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+  .progress.busy .fill { animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .65; } }
 
   /* ---------- Messages ---------- */
-  .msg { margin-top: 16px; padding: 14px 16px; border-radius: 12px; font-size: 15px; display: none; }
-  .msg.show { display: block; }
-  .msg.error   { background: #fbeeec; color: var(--error); border: 1px solid #f0d6d2; }
-
-  /* ---------- Écran de remerciement ---------- */
-  .thanks { text-align: center; padding: 30px 10px; display: none; }
-  .thanks.show { display: block; }
-  .thanks .heart { font-size: 40px; }
-  .thanks h2 {
-    font-family: 'Cormorant Garamond', serif; font-weight: 600;
-    font-size: 30px; margin: 12px 0 6px;
+  .msg {
+    margin-top: 16px; padding: 14px 16px;
+    border-radius: 10px; font-size: 14px; display: none;
+    animation: pop .25s ease both;
   }
-  .thanks p { color: var(--muted); }
+  .msg.show { display: block; }
+  .msg.error {
+    background: color-mix(in srgb, var(--error) 12%, var(--paper));
+    color: color-mix(in srgb, var(--error) 80%, #000 0%);
+    border: 1px solid color-mix(in srgb, var(--error) 35%, var(--border));
+  }
 
-  footer { text-align: center; margin-top: 28px; font-size: 12px; color: var(--muted); }
+  /* ============================================================
+     REMERCIEMENT
+     ============================================================ */
+  .thanks {
+    text-align: center;
+    padding: 18px 8px 6px;
+    display: none;
+  }
+  .thanks.show {
+    display: block;
+    animation: rise .8s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .thanks .heart-wrap {
+    display: inline-flex; width: 78px; height: 78px;
+    border-radius: 50%;
+    align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent-d);
+    margin-bottom: 18px;
+    animation: heartbeat 1.8s ease-in-out infinite;
+  }
+  .thanks .heart-wrap svg { width: 38px; height: 38px; }
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    25%     { transform: scale(1.08); }
+    40%     { transform: scale(1); }
+    55%     { transform: scale(1.05); }
+  }
+  .thanks h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 38px;
+    margin: 0 0 10px;
+    color: var(--ink);
+  }
+  .thanks h2 em { font-style: italic; color: var(--accent-d); }
+  .thanks .thanks-txt {
+    color: var(--ink-2);
+    font-size: 16px;
+    max-width: 36ch;
+    margin: 0 auto 22px;
+    text-wrap: pretty;
+  }
+  .thanks .thanks-sig {
+    font-family: var(--hand);
+    font-size: 24px;
+    color: var(--accent-d);
+    margin: 16px 0 24px;
+  }
+
+  /* ============================================================
+     PIED
+     ============================================================ */
+  footer {
+    text-align: center;
+    margin-top: 36px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--muted);
+  }
+  footer .foot-ornament {
+    color: var(--accent);
+    margin: 0 6px;
+    letter-spacing: 0;
+    font-family: var(--serif);
+  }
+
+  /* ============================================================
+     PANNEAU TWEAKS
+     ============================================================ */
+  #tweaks {
+    position: fixed; right: 16px; bottom: 16px;
+    z-index: 50;
+    width: 280px;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 24px 60px -20px rgba(60,40,15,.35);
+    padding: 16px;
+    font-family: var(--sans);
+    display: none;
+    animation: rise .25s ease both;
+  }
+  #tweaks.show { display: block; }
+  #tweaks .tweaks-title {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  #tweaks .tweaks-sub {
+    font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 14px;
+  }
+  #tweaks .swatches {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+  }
+  #tweaks .swatch {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    background: #fff;
+    transition: border-color .15s, transform .1s;
+  }
+  #tweaks .swatch:hover { border-color: var(--accent); }
+  #tweaks .swatch.active {
+    border-color: var(--accent-d);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  #tweaks .swatch .chips {
+    display: flex; gap: 0;
+  }
+  #tweaks .swatch .chip {
+    width: 14px; height: 22px;
+    border: 1px solid rgba(0,0,0,.06);
+  }
+  #tweaks .swatch .chip:first-child { border-radius: 3px 0 0 3px; }
+  #tweaks .swatch .chip:last-child  { border-radius: 0 3px 3px 0; }
+  #tweaks .swatch .name {
+    font-size: 12px; color: var(--ink); letter-spacing: .3px;
+  }
+  #tweaks .tweaks-close {
+    position: absolute; top: 10px; right: 10px;
+    width: 24px; height: 24px;
+    border: none; background: transparent;
+    color: var(--muted); cursor: pointer;
+    font-size: 18px; line-height: 1;
+  }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  @media (max-width: 380px) {
+    .wrap { padding: 28px 0 48px; }
+    .card { padding: 22px 18px 20px; }
+    .picker { padding: 26px 14px; }
+    h1 { font-size: clamp(34px, 13vw, 46px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+  }
 </style>
 </head>
 
-<body>
+<body data-palette="sepia">
 <div class="wrap">
 
   <header>
-    <!-- ============================================================
-         À PERSONNALISER : noms des mariés et date
-         ============================================================ -->
+    <div class="ornament" aria-hidden="true">
+      <span class="ornament-mark">Mariage</span>
+    </div>
     <div class="monogram" id="monogram">A &amp; B</div>
-    <h1 id="couple">Alice &amp; Benoît</h1>
-    <div class="date" id="weddingDate">20 juin 2026</div>
-    <div class="rule"></div>
-    <p class="lead">Vous avez immortalisé un joli moment&nbsp;? Partagez-le avec nous&nbsp;: vos photos et vidéos nous rejoignent en un instant.</p>
+    <h1 id="couple">
+      <span class="first">Alice</span><span class="amp">&amp;</span><span class="second">Benoît</span>
+    </h1>
+    <div class="date" id="weddingDate">20<span class="dot"></span>06<span class="dot"></span>2026</div>
   </header>
+
+  <!-- ========= MOT DES MARIÉS ========= -->
+  <section class="welcome">
+    <p class="welcome-quote" id="welcomeText">Chaque sourire, chaque regard, chaque pas de danse&nbsp;: aidez-nous à ne rien oublier de cette journée. Partagez ici vos photos et vidéos, comme on glisse un souvenir dans une enveloppe.</p>
+    <div class="signature" id="welcomeSig">Alice &amp; Benoît</div>
+  </section>
 
   <!-- ========= FORMULAIRE ========= -->
   <section class="card" id="form">
-    <label class="field-label" for="guest">Votre nom <span style="opacity:.7">(facultatif)</span></label>
-    <input type="text" id="guest" placeholder="Ex. Marie &amp; Julien" autocomplete="name" />
+    <div class="card-title">Partager un souvenir</div>
+    <div class="card-sub">Photos &amp; vidéos · directement depuis votre téléphone</div>
 
-    <!-- Zone cliquable d'ajout de fichiers -->
+    <div class="field">
+      <label class="field-label" for="guest">Votre nom <span class="opt">facultatif</span></label>
+      <input type="text" id="guest" placeholder="Ex. Marie &amp; Julien" autocomplete="name" />
+    </div>
+
     <label class="picker" for="files">
-      <span class="ico">📷</span>
-      <span class="big">Ajouter des photos &amp; vidéos</span>
-      <span class="small">Touchez ici pour choisir depuis votre téléphone</span>
+      <span class="picker-ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7.5C3 6.4 3.9 5.5 5 5.5h2.2l1.3-1.7c.2-.2.5-.4.8-.4h5.4c.3 0 .6.2.8.4l1.3 1.7H19c1.1 0 2 .9 2 2V18c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V7.5z"/>
+          <circle cx="12" cy="13" r="3.7"/>
+        </svg>
+      </span>
+      <span class="picker-big">Choisir mes photos</span>
+      <span class="picker-small">Touchez ici pour ouvrir la galerie</span>
     </label>
     <input type="file" id="files" accept="image/*,video/*" multiple />
 
-    <!-- Aperçus -->
     <div class="grid" id="grid" aria-live="polite"></div>
 
-    <!-- Progression globale -->
     <div class="progress" id="progress">
       <div class="bar"><div class="fill" id="fill"></div></div>
-      <div class="txt" id="progressTxt">Envoi en cours…</div>
+      <div class="txt" id="progressTxt">Envoi en cours</div>
     </div>
 
-    <!-- Messages d'erreur -->
     <div class="msg error" id="errorMsg"></div>
 
-    <!-- Boutons -->
     <button class="btn" id="send" disabled>Envoyer</button>
     <button class="btn secondary" id="retry" style="display:none">Réessayer les fichiers en échec</button>
   </section>
 
   <!-- ========= REMERCIEMENT ========= -->
   <section class="thanks" id="thanks">
-    <div class="heart">💍</div>
-    <h2>Merci&nbsp;!</h2>
-    <p id="thanksTxt">Vos photos ont bien été ajoutées 💍</p>
+    <div class="heart-wrap" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-10-9.4C.4 8 2 4 6 4c2.2 0 3.7 1.3 4.6 2.6.4.6 1.4.6 1.8 0C13.3 5.3 14.8 4 17 4c4 0 5.6 4 4 7.6C19.5 16.4 12 21 12 21z"/></svg>
+    </div>
+    <h2>Merci <em>infiniment</em></h2>
+    <p class="thanks-txt" id="thanksTxt">Votre souvenir nous a bien été envoyé. Nous le savourerons bientôt&nbsp;— d'ici là, profitez de la fête.</p>
+    <div class="thanks-sig" id="thanksSig">— Alice &amp; Benoît</div>
     <button class="btn secondary" id="again" style="max-width:280px;margin-left:auto;margin-right:auto;">Envoyer d'autres fichiers</button>
   </section>
 
-  <footer>Avec amour • <span id="footCouple">Alice &amp; Benoît</span></footer>
+  <footer>
+    Avec amour <span class="foot-ornament">·</span> <span id="footCouple">Alice &amp; Benoît</span>
+  </footer>
+</div>
+
+<!-- ========= PANNEAU TWEAKS ========= -->
+<div id="tweaks" role="dialog" aria-label="Tweaks">
+  <button class="tweaks-close" id="tweaksClose" aria-label="Fermer">×</button>
+  <div class="tweaks-title">Palette</div>
+  <div class="tweaks-sub">Élégance classique</div>
+  <div class="swatches" id="swatches"></div>
 </div>
 
 <script>
@@ -268,31 +651,46 @@
    ⬇️⬇️⬇️  CONFIGURATION — À MODIFIER  ⬇️⬇️⬇️
    ============================================================ */
 
-// 1) Collez ici l'URL de votre Web App Apps Script (se termine par /exec).
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxPRlHzumYEqQC-pDq7cMwMFVH_7s1dpuARRaPoTXXZI_cgklz2JTSHCAXrvuE03g9AIg/exec';
 
-// 2) Personnalisez les mariés et la date (s'affichent en haut de la page).
-const COUPLE_NAMES = 'Alice & Benoît';
-const WEDDING_DATE = '20 juin 2026';
-const MONOGRAM     = 'A & B';              // petit sigle au-dessus du titre
+const COUPLE_FIRST  = 'Alice';
+const COUPLE_SECOND = 'Benoît';
+const WEDDING_DATE  = '20·06·2026';
+const MONOGRAM      = 'A & B';
+const WELCOME_TEXT  = "Chaque sourire, chaque regard, chaque pas de danse : aidez-nous à ne rien oublier de cette journée. Partagez ici vos photos et vidéos, comme on glisse un souvenir dans une enveloppe.";
 
 /* ============================================================
    ⬆️⬆️⬆️  FIN DE LA CONFIGURATION  ⬆️⬆️⬆️
    ============================================================ */
 
-// Taille max par fichier (doit rester ≤ à MAX_FILE_SIZE du Code.gs).
-const MAX_FILE_SIZE = 40 * 1024 * 1024;   // ~40 Mo
-// Nombre de tentatives automatiques par fichier en cas d'erreur réseau.
+const MAX_FILE_SIZE = 40 * 1024 * 1024;
 const MAX_RETRIES = 2;
 
-// --- Application de la config à la page ---
-document.getElementById('couple').textContent     = COUPLE_NAMES;
-document.getElementById('footCouple').textContent  = COUPLE_NAMES;
-document.getElementById('weddingDate').textContent = WEDDING_DATE;
-document.getElementById('monogram').textContent    = MONOGRAM;
-document.title = COUPLE_NAMES + ' — Partagez vos photos';
+const couple = COUPLE_FIRST + ' & ' + COUPLE_SECOND;
+document.querySelector('h1 .first').textContent  = COUPLE_FIRST;
+document.querySelector('h1 .second').textContent = COUPLE_SECOND;
+document.getElementById('footCouple').textContent  = couple;
+document.getElementById('welcomeSig').textContent  = couple;
+document.getElementById('thanksSig').textContent   = '— ' + couple;
 
-// --- Références DOM ---
+// Date avec petites pastilles décoratives
+(function () {
+  const el = document.getElementById('weddingDate');
+  const parts = WEDDING_DATE.split(/[·.\-/\s]+/).filter(Boolean);
+  if (parts.length === 3) {
+    el.innerHTML = parts[0] + '<span class="dot"></span>' + parts[1] + '<span class="dot"></span>' + parts[2];
+  } else {
+    el.textContent = WEDDING_DATE;
+  }
+})();
+document.getElementById('monogram').textContent    = MONOGRAM;
+document.getElementById('welcomeText').textContent = WELCOME_TEXT;
+document.title = couple + ' — Partagez vos photos';
+
+/* ============================================================
+   LOGIQUE D'UPLOAD (préservée à l'identique)
+   ============================================================ */
+
 const fileInput  = document.getElementById('files');
 const guestInput = document.getElementById('guest');
 const grid       = document.getElementById('grid');
@@ -305,19 +703,15 @@ const errorMsg   = document.getElementById('errorMsg');
 const formEl     = document.getElementById('form');
 const thanksEl   = document.getElementById('thanks');
 
-// File d'attente des fichiers : { file, url, el, fillEl, pctEl, status }
-// status : 'waiting' | 'uploading' | 'done' | 'error'
 let items = [];
 let uploading = false;
 
-/* ---------- Sélection de fichiers ---------- */
 fileInput.addEventListener('change', () => {
   for (const file of fileInput.files) {
-    // On évite les doublons (même nom + même taille).
     if (items.some(it => it.file.name === file.name && it.file.size === file.size)) continue;
     addItem(file);
   }
-  fileInput.value = '';   // permet de re-sélectionner les mêmes fichiers plus tard
+  fileInput.value = '';
   refreshSendState();
 });
 
@@ -329,35 +723,32 @@ function addItem(file) {
   el.className = 'thumb';
   el.dataset.state = 'waiting';
 
-  // Vignette image ou vidéo
   if (isVideo) {
     el.innerHTML =
       '<video muted playsinline preload="metadata" src="' + url + '#t=0.1"></video>' +
-      '<span class="vid-badge">🎬 Vidéo</span>';
+      '<span class="vid-badge">VIDÉO</span>';
   } else {
     el.innerHTML = '<img alt="" src="' + url + '" />';
   }
 
-  // Voile d'état (en cours / ✓ / ↻)
   const veil = document.createElement('div');
   veil.className = 'veil';
   el.appendChild(veil);
 
-  // Bouton supprimer
   const rm = document.createElement('button');
   rm.className = 'rm'; rm.type = 'button'; rm.textContent = '×';
   rm.setAttribute('aria-label', 'Retirer ce fichier');
-  rm.addEventListener('click', () => removeItem(item));
-  el.appendChild(rm);
 
   grid.appendChild(el);
 
   const item = { file, url, el, veil, rm, status: 'waiting' };
+  rm.addEventListener('click', () => removeItem(item));
+  el.appendChild(rm);
   items.push(item);
 }
 
 function removeItem(item) {
-  if (uploading) return;           // pas de suppression pendant l'envoi
+  if (uploading) return;
   URL.revokeObjectURL(item.url);
   item.el.remove();
   items = items.filter(it => it !== item);
@@ -372,14 +763,12 @@ function refreshSendState() {
     : 'Envoyer';
 }
 
-/* ---------- Envoi ---------- */
 sendBtn.addEventListener('click', () => startUpload(false));
 retryBtn.addEventListener('click', () => startUpload(true));
 
 async function startUpload(retryOnly) {
   if (uploading) return;
 
-  // Garde-fou : l'URL du Web App doit être renseignée.
   if (WEB_APP_URL.indexOf('/exec') === -1) {
     showError("Configuration manquante : l'URL du Web App n'a pas été renseignée dans index.html.");
     return;
@@ -393,7 +782,6 @@ async function startUpload(retryOnly) {
   progress.classList.add('busy');
   fileInput.disabled = true;
 
-  // Liste des fichiers à traiter (tous, ou seulement ceux en échec).
   const queue = items.filter(it =>
     retryOnly ? it.status === 'error' : (it.status === 'waiting' || it.status === 'error')
   );
@@ -428,10 +816,8 @@ async function startUpload(retryOnly) {
   progress.classList.remove('busy');
 
   if (failCount === 0) {
-    // Tout est passé : écran de remerciement.
     showThanks();
   } else {
-    // Certains fichiers ont échoué : on propose de réessayer.
     progressTxt.textContent = doneCount + ' envoyé(s), ' + failCount + ' en échec.';
     showError(failCount + " fichier(s) n'ont pas pu être envoyés. Vous pouvez réessayer.");
     retryBtn.style.display = 'block';
@@ -443,13 +829,10 @@ function updateGlobal(done, total, inProgress) {
   const pct = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
   fill.style.width = pct + '%';
   progressTxt.textContent = inProgress
-    ? 'Envoi en cours… ' + Math.min(total, done + 1) + ' / ' + total
+    ? 'Envoi en cours · ' + Math.min(total, done + 1) + ' / ' + total
     : done + ' / ' + total + ' envoyé(s)';
 }
 
-/**
- * Lit un fichier et renvoie son contenu en base64 (sans le préfixe data:).
- */
 function readAsBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -459,18 +842,6 @@ function readAsBase64(file) {
   });
 }
 
-/**
- * Envoie UN fichier vers le Web App Apps Script.
- *
- * IMPORTANT (CORS) : on utilise fetch avec Content-Type "text/plain", ce qui
- * en fait une requête "simple" — SANS preflight OPTIONS. Apps Script ne sait
- * pas répondre à OPTIONS ni ajouter d'en-tête Access-Control-Allow-Origin, donc
- * il ne faut JAMAIS déclencher de preflight (ne pas mettre d'en-tête custom, ni
- * d'écouteur sur xhr.upload : c'est ce qui cassait l'upload).
- *
- * On ne peut donc pas suivre la progression en octets : la progression est
- * globale (fichier par fichier). Retries automatiques sur erreur réseau.
- */
 async function uploadOne(item, attempt = 0) {
   const file = item.file;
 
@@ -486,16 +857,15 @@ async function uploadOne(item, attempt = 0) {
     data:      base64
   });
 
-  // Timeout manuel (fetch n'en a pas nativement).
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 120000);   // 2 min / fichier
+  const timer = setTimeout(() => controller.abort(), 120000);
 
   try {
     const resp = await fetch(WEB_APP_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
       body:    payload,
-      redirect: 'follow',          // suit la redirection Google vers googleusercontent
+      redirect: 'follow',
       signal:   controller.signal
     });
     clearTimeout(timer);
@@ -505,17 +875,15 @@ async function uploadOne(item, attempt = 0) {
     const text = await resp.text();
     let res;
     try { res = JSON.parse(text); }
-    catch (_) { return { ok: true }; }      // réponse illisible mais HTTP OK : on considère réussi
+    catch (_) { return { ok: true }; }
 
     if (!res.ok) {
-      // Erreur renvoyée par le serveur (ex. dossier introuvable) : inutile de réessayer.
       const e = new Error(res.error || 'Erreur serveur'); e.fatal = true; throw e;
     }
     return res;
 
   } catch (err) {
     clearTimeout(timer);
-    // On réessaie uniquement les erreurs transitoires (réseau / timeout), pas les erreurs serveur.
     if (!err.fatal && attempt < MAX_RETRIES) {
       await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
       return uploadOne(item, attempt + 1);
@@ -524,7 +892,6 @@ async function uploadOne(item, attempt = 0) {
   }
 }
 
-/* ---------- Messages & écrans ---------- */
 function showError(text) { errorMsg.textContent = text; errorMsg.classList.add('show'); }
 function hideError()      { errorMsg.classList.remove('show'); }
 
@@ -534,7 +901,6 @@ function showThanks() {
 }
 
 document.getElementById('again').addEventListener('click', () => {
-  // Réinitialise pour un nouvel envoi.
   items.forEach(it => URL.revokeObjectURL(it.url));
   items = [];
   grid.innerHTML = '';
@@ -546,6 +912,68 @@ document.getElementById('again').addEventListener('click', () => {
   formEl.style.display = 'block';
   refreshSendState();
 });
+
+/* ============================================================
+   TWEAKS — sélecteur de palette via protocole host
+   ============================================================ */
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "palette": "sepia"
+}/*EDITMODE-END*/;
+
+const PALETTES = [
+  { id: 'sepia',   name: 'Sépia',           chips: ['#f6efe3', '#b48a55', '#3b342c'] },
+  { id: 'sauge',   name: 'Sauge & ivoire',  chips: ['#f3f0e6', '#8a9a82', '#2f3a30'] },
+  { id: 'albatre', name: 'Albâtre',         chips: ['#f4f1ec', '#a48a64', '#2a2622'] },
+  { id: 'terre',   name: 'Terre brûlée',    chips: ['#f3e8da', '#b7704a', '#3b2a20'] }
+];
+
+let currentPalette = TWEAK_DEFAULTS.palette || 'sepia';
+
+function applyPalette(id) {
+  currentPalette = id;
+  document.body.dataset.palette = id;
+  document.querySelectorAll('#swatches .swatch').forEach(el => {
+    el.classList.toggle('active', el.dataset.palette === id);
+  });
+}
+
+// Construit les pastilles
+(function buildSwatches() {
+  const root = document.getElementById('swatches');
+  PALETTES.forEach(p => {
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'swatch';
+    el.dataset.palette = p.id;
+    el.innerHTML =
+      '<span class="chips">' +
+        p.chips.map(c => '<span class="chip" style="background:' + c + '"></span>').join('') +
+      '</span>' +
+      '<span class="name">' + p.name + '</span>';
+    el.addEventListener('click', () => {
+      applyPalette(p.id);
+      try {
+        window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { palette: p.id } }, '*');
+      } catch (_) { /* hors host */ }
+    });
+    root.appendChild(el);
+  });
+})();
+
+applyPalette(currentPalette);
+
+// Protocole host : on n'affiche le panneau que quand Tweaks est activé
+const tweaksEl = document.getElementById('tweaks');
+window.addEventListener('message', (e) => {
+  const t = e?.data?.type;
+  if (t === '__activate_edit_mode') tweaksEl.classList.add('show');
+  else if (t === '__deactivate_edit_mode') tweaksEl.classList.remove('show');
+});
+document.getElementById('tweaksClose').addEventListener('click', () => {
+  tweaksEl.classList.remove('show');
+  try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch (_) {}
+});
+try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch (_) {}
 </script>
 </body>
 </html>
