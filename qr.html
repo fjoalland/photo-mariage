@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Générateur de QR code — Mariage</title>
+
+<!-- Bibliothèque QR code, gratuite, 100% côté navigateur (rien n'est envoyé en ligne) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #faf6f0; color: #4a4039;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 32px 16px; line-height: 1.5;
+  }
+  h1 { font-size: 22px; margin-bottom: 6px; }
+  p.help { color: #9a8f84; max-width: 460px; text-align: center; margin-bottom: 22px; }
+  input {
+    width: 100%; max-width: 460px; padding: 12px 14px; font-size: 15px;
+    border: 1px solid #ece3d8; border-radius: 10px;
+  }
+  button {
+    margin-top: 14px; padding: 12px 22px; font-size: 15px; cursor: pointer;
+    color: #fff; background: #b08856; border: none; border-radius: 10px;
+  }
+  #qr {
+    margin-top: 26px; padding: 20px; background: #fff;
+    border: 1px solid #ece3d8; border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(120,95,65,.10);
+  }
+  a.dl { margin-top: 16px; color: #b08856; font-size: 14px; }
+  a.dl.hidden { display: none; }
+</style>
+</head>
+<body>
+  <h1>QR code des invités</h1>
+  <p class="help">
+    Collez l'URL de votre page d'upload (le lien vers <code>index.html</code> une fois mise en ligne),
+    puis générez le QR code à imprimer sur vos tables, faire-part ou panneaux.
+  </p>
+
+  <input id="url" type="text" placeholder="https://...votre-page-upload..." />
+  <button id="gen">Générer le QR code</button>
+
+  <div id="qr"></div>
+  <a id="dl" class="dl hidden" download="qr-mariage.png">⬇️ Télécharger l'image (PNG)</a>
+
+<script>
+  const qrBox = document.getElementById('qr');
+  const dl    = document.getElementById('dl');
+
+  document.getElementById('gen').addEventListener('click', () => {
+    const url = document.getElementById('url').value.trim();
+    if (!url) { alert("Veuillez coller l'URL de votre page d'upload."); return; }
+
+    qrBox.innerHTML = '';
+    // 320 px : assez grand pour une impression nette.
+    new QRCode(qrBox, { text: url, width: 320, height: 320, correctLevel: QRCode.CorrectLevel.M });
+
+    // Lien de téléchargement (la lib génère un <canvas> ou une <img>).
+    setTimeout(() => {
+      const canvas = qrBox.querySelector('canvas');
+      const img    = qrBox.querySelector('img');
+      const data   = canvas ? canvas.toDataURL('image/png') : (img ? img.src : '');
+      if (data) { dl.href = data; dl.classList.remove('hidden'); }
+    }, 150);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Partagez vos photos</title>
+
+<!-- Police élégante et sobre (CDN gratuit Google Fonts) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+
+<style>
+  /* ============================================================
+     PALETTE & THÈME — douce, chaleureuse, mariage
+     ============================================================ */
+  :root {
+    --cream:   #faf6f0;   /* fond crème */
+    --card:    #ffffff;   /* cartes */
+    --ink:     #4a4039;   /* texte principal (brun doux) */
+    --muted:   #9a8f84;   /* texte secondaire */
+    --blush:   #c9a37a;   /* accent doré / sable */
+    --blush-d: #b08856;   /* accent foncé */
+    --sage:    #8a9a82;   /* vert tendre (succès) */
+    --border:  #ece3d8;   /* bordures discrètes */
+    --error:   #c0726b;   /* rouge doux (erreurs) */
+    --radius:  16px;
+    --shadow:  0 10px 30px rgba(120, 95, 65, .10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Jost', system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(900px 500px at 50% -10%, #fff 0%, transparent 60%),
+      linear-gradient(180deg, var(--cream) 0%, #f3ece2 100%);
+    min-height: 100dvh;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+  }
+
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 28px 0 48px;
+  }
+
+  /* ---------- En-tête ---------- */
+  header { text-align: center; margin-bottom: 26px; }
+  .monogram {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--blush-d); margin-bottom: 10px;
+  }
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600; font-size: clamp(30px, 9vw, 44px);
+    line-height: 1.1; color: var(--ink);
+  }
+  .date {
+    margin-top: 8px; font-size: 14px; letter-spacing: 1px;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .rule {
+    width: 56px; height: 1px; background: var(--blush);
+    margin: 18px auto 0; opacity: .7;
+  }
+  .lead {
+    margin-top: 16px; font-size: 16px; color: var(--muted);
+    max-width: 40ch; margin-left: auto; margin-right: auto;
+  }
+
+  /* ---------- Carte ---------- */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px;
+    margin-top: 22px;
+  }
+
+  label.field-label {
+    display: block; font-size: 13px; letter-spacing: .5px;
+    color: var(--muted); margin-bottom: 7px;
+  }
+  input[type="text"] {
+    width: 100%; padding: 13px 14px; font: inherit; color: var(--ink);
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input[type="text"]:focus {
+    outline: none; border-color: var(--blush);
+    box-shadow: 0 0 0 3px rgba(201,163,122,.18);
+  }
+
+  /* ---------- Zone de sélection des fichiers ---------- */
+  .picker {
+    margin-top: 18px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; text-align: center;
+    padding: 26px 18px;
+    border: 1.5px dashed var(--blush);
+    border-radius: 14px;
+    background: #fdfaf5;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .picker:active { background: #f7efe3; }
+  .picker .ico { font-size: 30px; }
+  .picker .big { font-size: 16px; color: var(--ink); }
+  .picker .small { font-size: 13px; color: var(--muted); }
+  input[type="file"] { display: none; }
+
+  /* ---------- Galerie d'aperçus ---------- */
+  .grid {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 10px;
+  }
+  .thumb {
+    position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden;
+    background: #f0e9df; border: 1px solid var(--border);
+  }
+  .thumb img, .thumb video {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .thumb .vid-badge {
+    position: absolute; left: 6px; bottom: 6px; font-size: 11px;
+    background: rgba(0,0,0,.55); color: #fff; padding: 2px 7px; border-radius: 20px;
+  }
+  .thumb .rm {
+    position: absolute; top: 5px; right: 5px; width: 24px; height: 24px;
+    border: none; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff;
+    font-size: 15px; line-height: 24px; cursor: pointer; padding: 0;
+  }
+  /* Voile d'état (progression / succès / erreur) sur la vignette */
+  .thumb .veil {
+    position: absolute; inset: 0; display: none;
+    align-items: center; justify-content: center;
+    font-size: 22px; color: #fff; background: rgba(74,64,57,.55);
+  }
+  .thumb[data-state="uploading"] .veil { display: flex; }
+  .thumb[data-state="done"]      .veil { display: flex; background: rgba(138,154,130,.78); }
+  .thumb[data-state="error"]     .veil { display: flex; background: rgba(192,114,107,.80); }
+  .thumb .pct { font-size: 13px; font-weight: 500; }
+
+  /* ---------- Bouton ---------- */
+  .btn {
+    width: 100%; margin-top: 20px; padding: 15px 18px;
+    font: inherit; font-size: 16px; letter-spacing: .4px; font-weight: 500;
+    color: #fff; background: var(--blush-d);
+    border: none; border-radius: 12px; cursor: pointer;
+    transition: filter .15s, transform .05s;
+  }
+  .btn:hover:not(:disabled) { filter: brightness(1.05); }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.secondary {
+    background: transparent; color: var(--blush-d);
+    border: 1px solid var(--blush); margin-top: 12px;
+  }
+
+  /* ---------- Progression globale ---------- */
+  .progress { margin-top: 18px; display: none; }
+  .progress.show { display: block; }
+  .progress .bar {
+    height: 10px; background: #efe7db; border-radius: 20px; overflow: hidden;
+  }
+  .progress .fill {
+    height: 100%; width: 0%; border-radius: 20px;
+    background: linear-gradient(90deg, var(--blush), var(--blush-d));
+    transition: width .25s ease;
+  }
+  .progress .txt {
+    margin-top: 8px; font-size: 13px; color: var(--muted); text-align: center;
+  }
+
+  /* ---------- Messages ---------- */
+  .msg { margin-top: 16px; padding: 14px 16px; border-radius: 12px; font-size: 15px; display: none; }
+  .msg.show { display: block; }
+  .msg.error   { background: #fbeeec; color: var(--error); border: 1px solid #f0d6d2; }
+
+  /* ---------- Écran de remerciement ---------- */
+  .thanks { text-align: center; padding: 30px 10px; display: none; }
+  .thanks.show { display: block; }
+  .thanks .heart { font-size: 40px; }
+  .thanks h2 {
+    font-family: 'Cormorant Garamond', serif; font-weight: 600;
+    font-size: 30px; margin: 12px 0 6px;
+  }
+  .thanks p { color: var(--muted); }
+
+  footer { text-align: center; margin-top: 28px; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <header>
+    <!-- ============================================================
+         À PERSONNALISER : noms des mariés et date
+         ============================================================ -->
+    <div class="monogram" id="monogram">A &amp; B</div>
+    <h1 id="couple">Alice &amp; Benoît</h1>
+    <div class="date" id="weddingDate">20 juin 2026</div>
+    <div class="rule"></div>
+    <p class="lead">Vous avez immortalisé un joli moment&nbsp;? Partagez-le avec nous&nbsp;: vos photos et vidéos nous rejoignent en un instant.</p>
+  </header>
+
+  <!-- ========= FORMULAIRE ========= -->
+  <section class="card" id="form">
+    <label class="field-label" for="guest">Votre nom <span style="opacity:.7">(facultatif)</span></label>
+    <input type="text" id="guest" placeholder="Ex. Marie &amp; Julien" autocomplete="name" />
+
+    <!-- Zone cliquable d'ajout de fichiers -->
+    <label class="picker" for="files">
+      <span class="ico">📷</span>
+      <span class="big">Ajouter des photos &amp; vidéos</span>
+      <span class="small">Touchez ici pour choisir depuis votre téléphone</span>
+    </label>
+    <input type="file" id="files" accept="image/*,video/*" multiple />
+
+    <!-- Aperçus -->
+    <div class="grid" id="grid" aria-live="polite"></div>
+
+    <!-- Progression globale -->
+    <div class="progress" id="progress">
+      <div class="bar"><div class="fill" id="fill"></div></div>
+      <div class="txt" id="progressTxt">Envoi en cours…</div>
+    </div>
+
+    <!-- Messages d'erreur -->
+    <div class="msg error" id="errorMsg"></div>
+
+    <!-- Boutons -->
+    <button class="btn" id="send" disabled>Envoyer</button>
+    <button class="btn secondary" id="retry" style="display:none">Réessayer les fichiers en échec</button>
+  </section>
+
+  <!-- ========= REMERCIEMENT ========= -->
+  <section class="thanks" id="thanks">
+    <div class="heart">💍</div>
+    <h2>Merci&nbsp;!</h2>
+    <p id="thanksTxt">Vos photos ont bien été ajoutées 💍</p>
+    <button class="btn secondary" id="again" style="max-width:280px;margin-left:auto;margin-right:auto;">Envoyer d'autres fichiers</button>
+  </section>
+
+  <footer>Avec amour • <span id="footCouple">Alice &amp; Benoît</span></footer>
+</div>
+
+<script>
+/* ============================================================
+   ⬇️⬇️⬇️  CONFIGURATION — À MODIFIER  ⬇️⬇️⬇️
+   ============================================================ */
+
+// 1) Collez ici l'URL de votre Web App Apps Script (se termine par /exec).
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxPRlHzumYEqQC-pDq7cMwMFVH_7s1dpuARRaPoTXXZI_cgklz2JTSHCAXrvuE03g9AIg/exec';
+
+// 2) Personnalisez les mariés et la date (s'affichent en haut de la page).
+const COUPLE_NAMES = 'Alice & Benoît';
+const WEDDING_DATE = '20 juin 2026';
+const MONOGRAM     = 'A & B';              // petit sigle au-dessus du titre
+
+/* ============================================================
+   ⬆️⬆️⬆️  FIN DE LA CONFIGURATION  ⬆️⬆️⬆️
+   ============================================================ */
+
+// Taille max par fichier (doit rester ≤ à MAX_FILE_SIZE du Code.gs).
+const MAX_FILE_SIZE = 40 * 1024 * 1024;   // ~40 Mo
+// Nombre de tentatives automatiques par fichier en cas d'erreur réseau.
+const MAX_RETRIES = 2;
+
+// --- Application de la config à la page ---
+document.getElementById('couple').textContent     = COUPLE_NAMES;
+document.getElementById('footCouple').textContent  = COUPLE_NAMES;
+document.getElementById('weddingDate').textContent = WEDDING_DATE;
+document.getElementById('monogram').textContent    = MONOGRAM;
+document.title = COUPLE_NAMES + ' — Partagez vos photos';
+
+// --- Références DOM ---
+const fileInput  = document.getElementById('files');
+const guestInput = document.getElementById('guest');
+const grid       = document.getElementById('grid');
+const sendBtn    = document.getElementById('send');
+const retryBtn   = document.getElementById('retry');
+const progress   = document.getElementById('progress');
+const fill       = document.getElementById('fill');
+const progressTxt= document.getElementById('progressTxt');
+const errorMsg   = document.getElementById('errorMsg');
+const formEl     = document.getElementById('form');
+const thanksEl   = document.getElementById('thanks');
+
+// File d'attente des fichiers : { file, url, el, fillEl, pctEl, status }
+// status : 'waiting' | 'uploading' | 'done' | 'error'
+let items = [];
+let uploading = false;
+
+/* ---------- Sélection de fichiers ---------- */
+fileInput.addEventListener('change', () => {
+  for (const file of fileInput.files) {
+    // On évite les doublons (même nom + même taille).
+    if (items.some(it => it.file.name === file.name && it.file.size === file.size)) continue;
+    addItem(file);
+  }
+  fileInput.value = '';   // permet de re-sélectionner les mêmes fichiers plus tard
+  refreshSendState();
+});
+
+function addItem(file) {
+  const isVideo = file.type.startsWith('video/');
+  const url = URL.createObjectURL(file);
+
+  const el = document.createElement('div');
+  el.className = 'thumb';
+  el.dataset.state = 'waiting';
+
+  // Vignette image ou vidéo
+  if (isVideo) {
+    el.innerHTML =
+      '<video muted playsinline preload="metadata" src="' + url + '#t=0.1"></video>' +
+      '<span class="vid-badge">🎬 Vidéo</span>';
+  } else {
+    el.innerHTML = '<img alt="" src="' + url + '" />';
+  }
+
+  // Voile d'état (progression %, ✓ ou ✕)
+  const veil = document.createElement('div');
+  veil.className = 'veil';
+  veil.innerHTML = '<span class="pct">0%</span>';
+  el.appendChild(veil);
+
+  // Bouton supprimer
+  const rm = document.createElement('button');
+  rm.className = 'rm'; rm.type = 'button'; rm.textContent = '×';
+  rm.setAttribute('aria-label', 'Retirer ce fichier');
+  rm.addEventListener('click', () => removeItem(item));
+  el.appendChild(rm);
+
+  grid.appendChild(el);
+
+  const item = { file, url, el, pctEl: veil.querySelector('.pct'), veil, rm, status: 'waiting' };
+  items.push(item);
+}
+
+function removeItem(item) {
+  if (uploading) return;           // pas de suppression pendant l'envoi
+  URL.revokeObjectURL(item.url);
+  item.el.remove();
+  items = items.filter(it => it !== item);
+  refreshSendState();
+}
+
+function refreshSendState() {
+  const pending = items.some(it => it.status === 'waiting' || it.status === 'error');
+  sendBtn.disabled = uploading || items.length === 0 || !pending;
+  sendBtn.textContent = items.length > 1
+    ? 'Envoyer ' + items.length + ' fichiers'
+    : 'Envoyer';
+}
+
+/* ---------- Envoi ---------- */
+sendBtn.addEventListener('click', () => startUpload(false));
+retryBtn.addEventListener('click', () => startUpload(true));
+
+async function startUpload(retryOnly) {
+  if (uploading) return;
+
+  // Garde-fou : l'URL du Web App doit être renseignée.
+  if (WEB_APP_URL.indexOf('/exec') === -1) {
+    showError("Configuration manquante : l'URL du Web App n'a pas été renseignée dans index.html.");
+    return;
+  }
+
+  hideError();
+  uploading = true;
+  retryBtn.style.display = 'none';
+  refreshSendState();
+  progress.classList.add('show');
+  fileInput.disabled = true;
+
+  // Liste des fichiers à traiter (tous, ou seulement ceux en échec).
+  const queue = items.filter(it =>
+    retryOnly ? it.status === 'error' : (it.status === 'waiting' || it.status === 'error')
+  );
+
+  const total = queue.length;
+  let doneCount = 0;
+  let failCount = 0;
+
+  for (const item of queue) {
+    item.status = 'uploading';
+    item.el.dataset.state = 'uploading';
+    item.pctEl.textContent = '0%';
+
+    try {
+      await uploadOne(item, (frac) => {
+        // Progression du fichier courant + progression globale.
+        const pct = Math.round(frac * 100);
+        item.pctEl.textContent = pct + '%';
+        updateGlobal(doneCount + frac, total);
+      });
+      item.status = 'done';
+      item.el.dataset.state = 'done';
+      item.veil.innerHTML = '<span>✓</span>';
+      doneCount++;
+    } catch (err) {
+      item.status = 'error';
+      item.el.dataset.state = 'error';
+      item.veil.innerHTML = '<span>↻</span>';
+      failCount++;
+    }
+    updateGlobal(doneCount, total);
+  }
+
+  uploading = false;
+  fileInput.disabled = false;
+
+  if (failCount === 0) {
+    // Tout est passé : écran de remerciement.
+    showThanks();
+  } else {
+    // Certains fichiers ont échoué : on propose de réessayer.
+    progressTxt.textContent = doneCount + ' envoyé(s), ' + failCount + ' en échec.';
+    showError(failCount + " fichier(s) n'ont pas pu être envoyés (réseau ou taille). Vous pouvez réessayer.");
+    retryBtn.style.display = 'block';
+    refreshSendState();
+  }
+}
+
+function updateGlobal(done, total) {
+  const pct = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
+  fill.style.width = pct + '%';
+  progressTxt.textContent = 'Envoi… ' + Math.min(total, Math.floor(done)) + ' / ' + total + '  (' + pct + '%)';
+}
+
+/**
+ * Envoie UN fichier vers le Web App.
+ * - Lecture en base64 (FileReader).
+ * - Envoi en text/plain (JSON) pour éviter le preflight CORS d'Apps Script.
+ * - Progression via XMLHttpRequest (fetch ne donne pas la progression d'upload).
+ * - Retries automatiques sur erreur réseau.
+ */
+function uploadOne(item, onProgress, attempt = 0) {
+  return new Promise((resolve, reject) => {
+    const file = item.file;
+
+    if (file.size > MAX_FILE_SIZE) {
+      return reject(new Error('Fichier trop volumineux'));
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Lecture impossible'));
+    reader.onload = () => {
+      // reader.result = "data:<mime>;base64,XXXX" -> on garde la partie après la virgule.
+      const base64 = String(reader.result).split(',')[1] || '';
+      const payload = JSON.stringify({
+        guestName: guestInput.value || '',
+        fileName:  file.name,
+        mimeType:  file.type || 'application/octet-stream',
+        data:      base64
+      });
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', WEB_APP_URL, true);
+      // text/plain = requête "simple" : pas de preflight OPTIONS (qu'Apps Script ne gère pas).
+      xhr.setRequestHeader('Content-Type', 'text/plain;charset=UTF-8');
+
+      xhr.upload.onprogress = (ev) => {
+        if (ev.lengthComputable) onProgress(ev.loaded / ev.total);
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const res = JSON.parse(xhr.responseText);
+            if (res.ok) { onProgress(1); resolve(res); }
+            else        { reject(new Error(res.error || 'Erreur serveur')); }
+          } catch (e) {
+            // Réponse non lisible (redirection Google) mais statut OK : on considère l'envoi réussi.
+            onProgress(1); resolve({ ok: true });
+          }
+        } else {
+          retryOrFail();
+        }
+      };
+      xhr.onerror   = retryOrFail;
+      xhr.ontimeout = retryOrFail;
+      xhr.timeout   = 120000;   // 2 min par fichier
+
+      function retryOrFail() {
+        if (attempt < MAX_RETRIES) {
+          // Nouvelle tentative après une courte pause.
+          setTimeout(() => {
+            uploadOne(item, onProgress, attempt + 1).then(resolve, reject);
+          }, 800 * (attempt + 1));
+        } else {
+          reject(new Error('Échec après plusieurs tentatives'));
+        }
+      }
+
+      xhr.send(payload);
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ---------- Messages & écrans ---------- */
+function showError(text) { errorMsg.textContent = text; errorMsg.classList.add('show'); }
+function hideError()      { errorMsg.classList.remove('show'); }
+
+function showThanks() {
+  formEl.style.display = 'none';
+  thanksEl.classList.add('show');
+}
+
+document.getElementById('again').addEventListener('click', () => {
+  // Réinitialise pour un nouvel envoi.
+  items.forEach(it => URL.revokeObjectURL(it.url));
+  items = [];
+  grid.innerHTML = '';
+  fill.style.width = '0%';
+  progress.classList.remove('show');
+  hideError();
+  retryBtn.style.display = 'none';
+  thanksEl.classList.remove('show');
+  formEl.style.display = 'block';
+  refreshSendState();
+});
+</script>
+</body>
+</html>
