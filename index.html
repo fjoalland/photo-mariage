@@ -147,7 +147,13 @@
   .thumb[data-state="uploading"] .veil { display: flex; }
   .thumb[data-state="done"]      .veil { display: flex; background: rgba(138,154,130,.78); }
   .thumb[data-state="error"]     .veil { display: flex; background: rgba(192,114,107,.80); }
-  .thumb .pct { font-size: 13px; font-weight: 500; }
+  /* Petit spinner affiché pendant l'envoi du fichier */
+  .thumb .spin {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 3px solid rgba(255,255,255,.45); border-top-color: #fff;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ---------- Bouton ---------- */
   .btn {
@@ -179,6 +185,9 @@
   .progress .txt {
     margin-top: 8px; font-size: 13px; color: var(--muted); text-align: center;
   }
+  /* Pulsation de la barre pendant l'envoi (la progression avance fichier par fichier) */
+  .progress.busy .fill { animation: pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
 
   /* ---------- Messages ---------- */
   .msg { margin-top: 16px; padding: 14px 16px; border-radius: 12px; font-size: 15px; display: none; }
@@ -329,10 +338,9 @@ function addItem(file) {
     el.innerHTML = '<img alt="" src="' + url + '" />';
   }
 
-  // Voile d'état (progression %, ✓ ou ✕)
+  // Voile d'état (en cours / ✓ / ↻)
   const veil = document.createElement('div');
   veil.className = 'veil';
-  veil.innerHTML = '<span class="pct">0%</span>';
   el.appendChild(veil);
 
   // Bouton supprimer
@@ -344,7 +352,7 @@ function addItem(file) {
 
   grid.appendChild(el);
 
-  const item = { file, url, el, pctEl: veil.querySelector('.pct'), veil, rm, status: 'waiting' };
+  const item = { file, url, el, veil, rm, status: 'waiting' };
   items.push(item);
 }
 
@@ -382,6 +390,7 @@ async function startUpload(retryOnly) {
   retryBtn.style.display = 'none';
   refreshSendState();
   progress.classList.add('show');
+  progress.classList.add('busy');
   fileInput.disabled = true;
 
   // Liste des fichiers à traiter (tous, ou seulement ceux en échec).
@@ -396,15 +405,11 @@ async function startUpload(retryOnly) {
   for (const item of queue) {
     item.status = 'uploading';
     item.el.dataset.state = 'uploading';
-    item.pctEl.textContent = '0%';
+    item.veil.innerHTML = '<span class="spin"></span>';
+    updateGlobal(doneCount, total, true);
 
     try {
-      await uploadOne(item, (frac) => {
-        // Progression du fichier courant + progression globale.
-        const pct = Math.round(frac * 100);
-        item.pctEl.textContent = pct + '%';
-        updateGlobal(doneCount + frac, total);
-      });
+      await uploadOne(item);
       item.status = 'done';
       item.el.dataset.state = 'done';
       item.veil.innerHTML = '<span>✓</span>';
@@ -415,11 +420,12 @@ async function startUpload(retryOnly) {
       item.veil.innerHTML = '<span>↻</span>';
       failCount++;
     }
-    updateGlobal(doneCount, total);
+    updateGlobal(doneCount, total, false);
   }
 
   uploading = false;
   fileInput.disabled = false;
+  progress.classList.remove('busy');
 
   if (failCount === 0) {
     // Tout est passé : écran de remerciement.
@@ -427,88 +433,95 @@ async function startUpload(retryOnly) {
   } else {
     // Certains fichiers ont échoué : on propose de réessayer.
     progressTxt.textContent = doneCount + ' envoyé(s), ' + failCount + ' en échec.';
-    showError(failCount + " fichier(s) n'ont pas pu être envoyés (réseau ou taille). Vous pouvez réessayer.");
+    showError(failCount + " fichier(s) n'ont pas pu être envoyés. Vous pouvez réessayer.");
     retryBtn.style.display = 'block';
     refreshSendState();
   }
 }
 
-function updateGlobal(done, total) {
+function updateGlobal(done, total, inProgress) {
   const pct = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
   fill.style.width = pct + '%';
-  progressTxt.textContent = 'Envoi… ' + Math.min(total, Math.floor(done)) + ' / ' + total + '  (' + pct + '%)';
+  progressTxt.textContent = inProgress
+    ? 'Envoi en cours… ' + Math.min(total, done + 1) + ' / ' + total
+    : done + ' / ' + total + ' envoyé(s)';
 }
 
 /**
- * Envoie UN fichier vers le Web App.
- * - Lecture en base64 (FileReader).
- * - Envoi en text/plain (JSON) pour éviter le preflight CORS d'Apps Script.
- * - Progression via XMLHttpRequest (fetch ne donne pas la progression d'upload).
- * - Retries automatiques sur erreur réseau.
+ * Lit un fichier et renvoie son contenu en base64 (sans le préfixe data:).
  */
-function uploadOne(item, onProgress, attempt = 0) {
+function readAsBase64(file) {
   return new Promise((resolve, reject) => {
-    const file = item.file;
-
-    if (file.size > MAX_FILE_SIZE) {
-      return reject(new Error('Fichier trop volumineux'));
-    }
-
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Lecture impossible'));
-    reader.onload = () => {
-      // reader.result = "data:<mime>;base64,XXXX" -> on garde la partie après la virgule.
-      const base64 = String(reader.result).split(',')[1] || '';
-      const payload = JSON.stringify({
-        guestName: guestInput.value || '',
-        fileName:  file.name,
-        mimeType:  file.type || 'application/octet-stream',
-        data:      base64
-      });
-
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', WEB_APP_URL, true);
-      // text/plain = requête "simple" : pas de preflight OPTIONS (qu'Apps Script ne gère pas).
-      xhr.setRequestHeader('Content-Type', 'text/plain;charset=UTF-8');
-
-      xhr.upload.onprogress = (ev) => {
-        if (ev.lengthComputable) onProgress(ev.loaded / ev.total);
-      };
-
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const res = JSON.parse(xhr.responseText);
-            if (res.ok) { onProgress(1); resolve(res); }
-            else        { reject(new Error(res.error || 'Erreur serveur')); }
-          } catch (e) {
-            // Réponse non lisible (redirection Google) mais statut OK : on considère l'envoi réussi.
-            onProgress(1); resolve({ ok: true });
-          }
-        } else {
-          retryOrFail();
-        }
-      };
-      xhr.onerror   = retryOrFail;
-      xhr.ontimeout = retryOrFail;
-      xhr.timeout   = 120000;   // 2 min par fichier
-
-      function retryOrFail() {
-        if (attempt < MAX_RETRIES) {
-          // Nouvelle tentative après une courte pause.
-          setTimeout(() => {
-            uploadOne(item, onProgress, attempt + 1).then(resolve, reject);
-          }, 800 * (attempt + 1));
-        } else {
-          reject(new Error('Échec après plusieurs tentatives'));
-        }
-      }
-
-      xhr.send(payload);
-    };
-
+    reader.onload  = () => resolve(String(reader.result).split(',')[1] || '');
     reader.readAsDataURL(file);
   });
+}
+
+/**
+ * Envoie UN fichier vers le Web App Apps Script.
+ *
+ * IMPORTANT (CORS) : on utilise fetch avec Content-Type "text/plain", ce qui
+ * en fait une requête "simple" — SANS preflight OPTIONS. Apps Script ne sait
+ * pas répondre à OPTIONS ni ajouter d'en-tête Access-Control-Allow-Origin, donc
+ * il ne faut JAMAIS déclencher de preflight (ne pas mettre d'en-tête custom, ni
+ * d'écouteur sur xhr.upload : c'est ce qui cassait l'upload).
+ *
+ * On ne peut donc pas suivre la progression en octets : la progression est
+ * globale (fichier par fichier). Retries automatiques sur erreur réseau.
+ */
+async function uploadOne(item, attempt = 0) {
+  const file = item.file;
+
+  if (file.size > MAX_FILE_SIZE) {
+    const e = new Error('Fichier trop volumineux'); e.fatal = true; throw e;
+  }
+
+  const base64 = await readAsBase64(file);
+  const payload = JSON.stringify({
+    guestName: guestInput.value || '',
+    fileName:  file.name,
+    mimeType:  file.type || 'application/octet-stream',
+    data:      base64
+  });
+
+  // Timeout manuel (fetch n'en a pas nativement).
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 120000);   // 2 min / fichier
+
+  try {
+    const resp = await fetch(WEB_APP_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+      body:    payload,
+      redirect: 'follow',          // suit la redirection Google vers googleusercontent
+      signal:   controller.signal
+    });
+    clearTimeout(timer);
+
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+    const text = await resp.text();
+    let res;
+    try { res = JSON.parse(text); }
+    catch (_) { return { ok: true }; }      // réponse illisible mais HTTP OK : on considère réussi
+
+    if (!res.ok) {
+      // Erreur renvoyée par le serveur (ex. dossier introuvable) : inutile de réessayer.
+      const e = new Error(res.error || 'Erreur serveur'); e.fatal = true; throw e;
+    }
+    return res;
+
+  } catch (err) {
+    clearTimeout(timer);
+    // On réessaie uniquement les erreurs transitoires (réseau / timeout), pas les erreurs serveur.
+    if (!err.fatal && attempt < MAX_RETRIES) {
+      await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
+      return uploadOne(item, attempt + 1);
+    }
+    throw err;
+  }
 }
 
 /* ---------- Messages & écrans ---------- */
