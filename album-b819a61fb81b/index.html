@@ -212,6 +212,85 @@
   }
 
   /* ============================================================
+     LIEN VERS LA GALERIE (au-dessus du formulaire)
+     ============================================================ */
+  .gallery-cta {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 14px;
+    margin: 6px auto 22px;
+    animation: rise 1s .22s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .gallery-cta .rule {
+    display: flex; align-items: center; gap: 14px;
+    color: var(--accent);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    width: 100%;
+    justify-content: center;
+  }
+  .gallery-cta .rule::before,
+  .gallery-cta .rule::after {
+    content: ""; flex: 1; max-width: 90px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--line), transparent);
+  }
+  .gallery-cta .rule .rule-text {
+    font-style: normal; letter-spacing: 4px; font-size: 11px;
+    color: var(--ink-2); font-family: var(--sans); font-weight: 500;
+  }
+  .gallery-link {
+    display: inline-flex; align-items: baseline; gap: 12px;
+    text-decoration: none;
+    padding: 14px 28px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: .2px;
+    box-shadow: 0 10px 28px -16px color-mix(in srgb, var(--accent-d) 60%, transparent);
+    transition: background .2s, border-color .2s, transform .12s, box-shadow .25s, color .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .gallery-link::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--accent) 22%, transparent) 50%, transparent 100%);
+    transform: translateX(-100%);
+    transition: transform .55s ease;
+  }
+  .gallery-link:hover {
+    border-color: var(--accent-d);
+    color: var(--accent-d);
+    transform: translateY(-1px);
+    box-shadow: 0 16px 36px -18px color-mix(in srgb, var(--accent-d) 75%, transparent);
+  }
+  .gallery-link:hover::before { transform: translateX(100%); }
+  .gallery-link:active { transform: translateY(0); }
+  .gallery-link .arrow {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--accent-d);
+    transition: transform .25s ease;
+    font-size: 22px;
+    line-height: 1;
+  }
+  .gallery-link:hover .arrow { transform: translateX(4px); }
+  .gallery-link .gallery-sub {
+    display: block;
+    font-family: var(--sans);
+    font-style: normal;
+    font-size: 10px; letter-spacing: 2.4px; text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ============================================================
      CARTE FORMULAIRE
      ============================================================ */
   .card {
@@ -587,6 +666,18 @@
     <div class="signature" id="welcomeSig">Alice &amp; Benoît</div>
   </section>
 
+  <!-- ========= LIEN VERS LA GALERIE ========= -->
+  <div class="gallery-cta" id="galleryCta">
+    <div class="rule" aria-hidden="true"><span class="rule-text">Déjà arrivés ?</span></div>
+    <a class="gallery-link" href="./galerie.html">
+      <span>
+        Voir la galerie
+        <span class="gallery-sub">Les souvenirs déjà partagés</span>
+      </span>
+      <span class="arrow" aria-hidden="true">→</span>
+    </a>
+  </div>
+
   <!-- ========= FORMULAIRE ========= -->
   <section class="card" id="form">
     <div class="card-title">Partager un souvenir</div>
@@ -636,7 +727,6 @@
 
   <footer>
     Avec amour <span class="foot-ornament">·</span> <span id="footCouple">Alice &amp; Benoît</span>
-    <div style="margin-top:10px;"><a href="./galerie.html" style="color:var(--accent-d);font-size:13px;letter-spacing:.3px;">🖼 Voir la galerie des souvenirs</a></div>
   </footer>
 </div>
 
