@@ -218,7 +218,7 @@
    ============================================================ */
 
 // Même URL que dans index.html (Web App Apps Script, finit par /exec).
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw9mlAKJCHQjrzbh4ez0KpJE3VlFkxVhJodWgtBr-Vrfc3NPBUq7dkQee-i02wCj-Hrmg/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzFRQ6avQKyG3buRQ5WSvvo5yz45sOjAQNYQHfv1oEZaKod4XQAekVfki8XWvKVDRbthA/exec';
 
 const COUPLE_FIRST  = 'Alice';
 const COUPLE_SECOND = 'Benoît';
@@ -242,7 +242,7 @@ const elEmpty   = document.getElementById('empty');
 const elError   = document.getElementById('error');
 const elCount   = document.getElementById('count');
 
-let files = [];   // { id, name, mimeType, isVideo }
+let files = [];   // { id, name, mimeType }
 
 function show(which) {
   elLoading.classList.toggle('hidden', which !== 'loading');
@@ -259,12 +259,10 @@ async function load() {
     const data = await resp.json();
     if (!data.ok) throw new Error(data.error || 'Erreur serveur');
 
-    files = (data.files || []).map(f => ({
-      id: f.id,
-      name: f.name,
-      mimeType: f.mimeType || '',
-      isVideo: (f.mimeType || '').indexOf('video/') === 0
-    }));
+    // Galerie photos uniquement : on ne garde que les images.
+    files = (data.files || [])
+      .filter(f => (f.mimeType || '').indexOf('image/') === 0)
+      .map(f => ({ id: f.id, name: f.name, mimeType: f.mimeType || '' }));
 
     if (files.length === 0) { show('empty'); elCount.textContent = ''; return; }
 
@@ -295,13 +293,6 @@ function render() {
     img.addEventListener('error', () => onThumbError(img, f));
     tile.appendChild(img);
 
-    if (f.isVideo) {
-      const play = document.createElement('div');
-      play.className = 'play';
-      play.innerHTML = '<span>▶</span>';
-      tile.appendChild(play);
-    }
-
     grid.appendChild(tile);
   });
 }
@@ -324,7 +315,7 @@ function onThumbError(img, f) {
     img.remove();
     const fb = document.createElement('div');
     fb.className = 'vidfallback';
-    fb.textContent = f.isVideo ? '🎬' : '🖼';
+    fb.textContent = '🖼';
     tile.insertBefore(fb, tile.firstChild);
   }
 }
@@ -352,13 +343,7 @@ function step(d) {
 }
 function renderLightbox() {
   const f = files[current];
-  if (f.isVideo) {
-    // Lecteur Drive intégré (le fichier est partagé "par lien").
-    lbMedia.innerHTML = '<iframe src="https://drive.google.com/file/d/' + f.id +
-      '/preview" allow="autoplay" allowfullscreen></iframe>';
-  } else {
-    lbMedia.innerHTML = '<img alt="" src="https://lh3.googleusercontent.com/d/' + f.id + '=w1920">';
-  }
+  lbMedia.innerHTML = '<img alt="" src="https://lh3.googleusercontent.com/d/' + f.id + '=w1920">';
   lbCap.textContent = (current + 1) + ' / ' + files.length;
 }
 

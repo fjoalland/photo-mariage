@@ -583,14 +583,14 @@
 
   <!-- ========= MOT DES MARIÉS ========= -->
   <section class="welcome">
-    <p class="welcome-quote" id="welcomeText">Chaque sourire, chaque regard, chaque pas de danse&nbsp;: aidez-nous à ne rien oublier de cette journée. Partagez ici vos photos et vidéos, comme on glisse un souvenir dans une enveloppe.</p>
+    <p class="welcome-quote" id="welcomeText">Chaque sourire, chaque regard, chaque pas de danse&nbsp;: aidez-nous à ne rien oublier de cette journée. Partagez ici vos photos, comme on glisse un souvenir dans une enveloppe.</p>
     <div class="signature" id="welcomeSig">Alice &amp; Benoît</div>
   </section>
 
   <!-- ========= FORMULAIRE ========= -->
   <section class="card" id="form">
     <div class="card-title">Partager un souvenir</div>
-    <div class="card-sub">Photos &amp; vidéos · directement depuis votre téléphone</div>
+    <div class="card-sub">Vos photos · directement depuis votre téléphone</div>
 
     <div class="field">
       <label class="field-label" for="guest">Votre nom <span class="opt">facultatif</span></label>
@@ -607,7 +607,7 @@
       <span class="picker-big">Choisir mes photos</span>
       <span class="picker-small">Touchez ici pour ouvrir la galerie</span>
     </label>
-    <input type="file" id="files" accept="image/*,video/*" multiple />
+    <input type="file" id="files" accept="image/*" multiple />
 
     <div class="grid" id="grid" aria-live="polite"></div>
 
@@ -653,13 +653,13 @@
    ⬇️⬇️⬇️  CONFIGURATION — À MODIFIER  ⬇️⬇️⬇️
    ============================================================ */
 
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw9mlAKJCHQjrzbh4ez0KpJE3VlFkxVhJodWgtBr-Vrfc3NPBUq7dkQee-i02wCj-Hrmg/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzFRQ6avQKyG3buRQ5WSvvo5yz45sOjAQNYQHfv1oEZaKod4XQAekVfki8XWvKVDRbthA/exec';
 
 const COUPLE_FIRST  = 'Alice';
 const COUPLE_SECOND = 'Benoît';
 const WEDDING_DATE  = '20·06·2026';
 const MONOGRAM      = 'A & B';
-const WELCOME_TEXT  = "Chaque sourire, chaque regard, chaque pas de danse : aidez-nous à ne rien oublier de cette journée. Partagez ici vos photos et vidéos, comme on glisse un souvenir dans une enveloppe.";
+const WELCOME_TEXT  = "Chaque sourire, chaque regard, chaque pas de danse : aidez-nous à ne rien oublier de cette journée. Partagez ici vos photos, comme on glisse un souvenir dans une enveloppe.";
 
 /* ============================================================
    ⬆️⬆️⬆️  FIN DE LA CONFIGURATION  ⬆️⬆️⬆️
@@ -718,20 +718,12 @@ fileInput.addEventListener('change', () => {
 });
 
 function addItem(file) {
-  const isVideo = file.type.startsWith('video/');
   const url = URL.createObjectURL(file);
 
   const el = document.createElement('div');
   el.className = 'thumb';
   el.dataset.state = 'waiting';
-
-  if (isVideo) {
-    el.innerHTML =
-      '<video muted playsinline preload="metadata" src="' + url + '#t=0.1"></video>' +
-      '<span class="vid-badge">VIDÉO</span>';
-  } else {
-    el.innerHTML = '<img alt="" src="' + url + '" />';
-  }
+  el.innerHTML = '<img alt="" src="' + url + '" />';
 
   const veil = document.createElement('div');
   veil.className = 'veil';
