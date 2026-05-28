@@ -130,6 +130,21 @@
     aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
     color: var(--muted); font-size: 30px;
   }
+  /* Bouton télécharger sur chaque vignette */
+  .tile .dl {
+    position: absolute; top: 8px; right: 8px;
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(40,30,20,.55); color: #fff; font-size: 16px;
+    text-decoration: none; backdrop-filter: blur(2px);
+    opacity: 0; transform: translateY(-4px); transition: opacity .15s, transform .15s, background .15s;
+  }
+  .tile:hover .dl { opacity: 1; transform: none; }
+  .tile .dl:hover { background: rgba(40,30,20,.8); }
+  /* Sur écran tactile (pas de survol), on les montre en permanence */
+  @media (hover: none) {
+    .tile .dl { opacity: .9; transform: none; }
+  }
 
   /* ---------- Lightbox ---------- */
   .lb {
@@ -163,6 +178,15 @@
     background: rgba(255,255,255,.12); color: #fff; font-size: 22px;
   }
   .lb-close:hover { background: rgba(255,255,255,.25); }
+  .lb-dl {
+    position: absolute; top: 16px; left: 16px; z-index: 2;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px; border-radius: 30px; cursor: pointer;
+    background: rgba(255,255,255,.14); color: #fff; font-size: 14px;
+    text-decoration: none; transition: background .15s;
+  }
+  .lb-dl:hover { background: rgba(255,255,255,.28); }
+  @media (max-width: 560px) { .lb-dl { font-size: 13px; padding: 8px 13px; } }
   .lb-cap {
     position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;
     color: rgba(255,255,255,.7); font-size: 12px; letter-spacing: .3px; padding: 0 60px;
@@ -206,6 +230,7 @@
 <!-- Lightbox -->
 <div class="lb" id="lb">
   <button class="lb-close" id="lbClose" aria-label="Fermer">✕</button>
+  <a class="lb-dl" id="lbDl" target="_blank" rel="noopener" aria-label="Télécharger">⬇ Télécharger</a>
   <button class="lb-btn lb-prev" id="lbPrev" aria-label="Précédent">‹</button>
   <div class="lb-media" id="lbMedia"></div>
   <button class="lb-btn lb-next" id="lbNext" aria-label="Suivant">›</button>
@@ -293,12 +318,29 @@ function render() {
     img.addEventListener('error', () => onThumbError(img, f));
     tile.appendChild(img);
 
+    // Bouton de téléchargement (n'ouvre pas la visionneuse).
+    const dl = document.createElement('a');
+    dl.className = 'dl';
+    dl.href = downloadUrl(f.id);
+    dl.target = '_blank';
+    dl.rel = 'noopener';
+    dl.setAttribute('download', f.name);
+    dl.title = 'Télécharger';
+    dl.innerHTML = '⬇';
+    dl.addEventListener('click', (e) => e.stopPropagation());
+    tile.appendChild(dl);
+
     grid.appendChild(tile);
   });
 }
 
 function thumbUrl(id, w) {
   return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + w;
+}
+
+// Lien de téléchargement du fichier original (Drive force le téléchargement).
+function downloadUrl(id) {
+  return 'https://drive.google.com/uc?export=download&id=' + id;
 }
 
 function onThumbError(img, f) {
@@ -345,6 +387,9 @@ function renderLightbox() {
   const f = files[current];
   lbMedia.innerHTML = '<img alt="" src="https://lh3.googleusercontent.com/d/' + f.id + '=w1920">';
   lbCap.textContent = (current + 1) + ' / ' + files.length;
+  const dl = document.getElementById('lbDl');
+  dl.href = downloadUrl(f.id);
+  dl.setAttribute('download', f.name);
 }
 
 document.getElementById('lbClose').addEventListener('click', closeLightbox);
