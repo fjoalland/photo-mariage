@@ -1,5 +1,6 @@
-# Code serveur Apps Script : géré dans l'éditeur script.google.com, pas besoin de le publier.
+# Fichiers serveur Apps Script : gérés dans l'éditeur script.google.com, pas besoin de les publier.
 Code.gs
+appsscript.json
 
 # Système
 .DS_Store

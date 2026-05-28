@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Galerie des souvenirs</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&family=Caveat:wght@500;600&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg-1:    #f6efe3;
+    --bg-2:    #ede2cf;
+    --paper:   #fdfaf3;
+    --ink:     #3b342c;
+    --ink-2:   #6b5e51;
+    --muted:   #a89684;
+    --accent:  #b48a55;
+    --accent-d:#8a6334;
+    --line:    #d9c9b1;
+    --border:  #e7dbc6;
+    --error:   #b96b62;
+    --radius:  14px;
+    --shadow:  0 1px 0 rgba(0,0,0,.02), 0 18px 44px -24px rgba(80,55,25,.28);
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans:  'Jost', system-ui, -apple-system, sans-serif;
+    --hand:  'Caveat', cursive;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background:
+      radial-gradient(1100px 600px at 50% -8%, #fff8ea 0%, transparent 55%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    background-attachment: fixed;
+    min-height: 100dvh;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+  }
+
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 34px 0 56px; }
+
+  /* ---------- En-tête ---------- */
+  header { text-align: center; margin-bottom: 26px; }
+  .ornament {
+    display: flex; align-items: center; justify-content: center;
+    gap: 14px; margin-bottom: 14px; color: var(--accent);
+  }
+  .ornament::before, .ornament::after {
+    content: ""; display: block; height: 1px; width: 38px;
+    background: linear-gradient(90deg, transparent, var(--line), transparent);
+  }
+  .ornament-mark { font-size: 11px; letter-spacing: 6px; text-transform: uppercase; }
+  .monogram {
+    font-family: var(--serif); font-style: italic; font-weight: 500;
+    font-size: 18px; letter-spacing: 2px; color: var(--ink-2); margin-bottom: 8px;
+  }
+  h1 {
+    font-family: var(--serif); font-weight: 500;
+    font-size: clamp(32px, 9vw, 50px); line-height: 1; color: var(--ink);
+  }
+  .sub {
+    margin-top: 14px; font-size: 12px; letter-spacing: 3px;
+    color: var(--ink-2); text-transform: uppercase;
+  }
+  .count { margin-top: 6px; font-size: 13px; color: var(--muted); letter-spacing: .5px; }
+
+  .actions {
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    margin-top: 20px;
+  }
+  .lnk {
+    font: inherit; font-size: 14px; letter-spacing: .3px; cursor: pointer;
+    color: var(--accent-d); background: transparent;
+    border: 1px solid var(--line); border-radius: 30px; padding: 9px 18px;
+    text-decoration: none; transition: background .15s, border-color .15s;
+  }
+  .lnk:hover { background: #fff; border-color: var(--accent); }
+  .lnk.solid { background: var(--accent-d); color: #fff; border-color: var(--accent-d); }
+
+  /* ---------- États ---------- */
+  .state {
+    text-align: center; padding: 60px 16px; color: var(--muted);
+    font-family: var(--serif); font-size: 20px; font-style: italic;
+  }
+  .state.hidden { display: none; }
+  .spin {
+    width: 30px; height: 30px; border-radius: 50%; margin: 0 auto 16px;
+    border: 3px solid var(--line); border-top-color: var(--accent-d);
+    animation: spin .9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .state .small { display: block; font-family: var(--sans); font-style: normal; font-size: 14px; margin-top: 6px; }
+
+  /* ---------- Galerie (mosaïque) ---------- */
+  .grid { column-gap: 12px; column-count: 2; }
+  @media (min-width: 620px)  { .grid { column-count: 3; } }
+  @media (min-width: 920px)  { .grid { column-count: 4; } }
+  .grid.hidden { display: none; }
+
+  .tile {
+    break-inside: avoid; margin-bottom: 12px; position: relative;
+    border-radius: var(--radius); overflow: hidden; cursor: pointer;
+    background: #efe6d6; border: 1px solid var(--border);
+    box-shadow: var(--shadow); display: block; width: 100%;
+    animation: fade .5s ease both;
+  }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .tile img {
+    width: 100%; display: block; background: #efe6d6;
+  }
+  .tile .play {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .tile .play span {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(40,30,20,.5); backdrop-filter: blur(2px);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 20px; padding-left: 4px;
+  }
+  .tile .vidfallback {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 30px;
+  }
+
+  /* ---------- Lightbox ---------- */
+  .lb {
+    position: fixed; inset: 0; z-index: 50; display: none;
+    background: rgba(28,22,16,.92); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .lb.open { display: flex; }
+  .lb-media { max-width: 94vw; max-height: 86vh; display: flex; }
+  .lb-media img {
+    max-width: 94vw; max-height: 86vh; object-fit: contain;
+    border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  .lb-media iframe {
+    width: min(92vw, 1100px); height: min(80vh, 640px);
+    border: 0; border-radius: 8px; background: #000;
+  }
+  .lb-btn {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer;
+    background: rgba(255,255,255,.12); color: #fff; font-size: 24px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .lb-btn:hover { background: rgba(255,255,255,.25); }
+  .lb-prev { left: 14px; }
+  .lb-next { right: 14px; }
+  .lb-close {
+    position: absolute; top: 14px; right: 16px;
+    width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
+    background: rgba(255,255,255,.12); color: #fff; font-size: 22px;
+  }
+  .lb-close:hover { background: rgba(255,255,255,.25); }
+  .lb-cap {
+    position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;
+    color: rgba(255,255,255,.7); font-size: 12px; letter-spacing: .3px; padding: 0 60px;
+  }
+  @media (max-width: 560px) {
+    .lb-btn { width: 40px; height: 40px; font-size: 20px; }
+    .lb-prev { left: 6px; } .lb-next { right: 6px; }
+  }
+
+  footer { text-align: center; margin-top: 34px; font-size: 12px; color: var(--muted); }
+  footer .sig { font-family: var(--hand); font-size: 20px; color: var(--accent-d); }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="ornament"><span class="ornament-mark" id="mono2">A & B</span></div>
+    <div class="monogram">Galerie des souvenirs</div>
+    <h1 id="couple">Alice &amp; Benoît</h1>
+    <div class="sub" id="date">20·06·2026</div>
+    <div class="count" id="count"></div>
+    <div class="actions">
+      <a class="lnk solid" href="./index.html">＋ Ajouter mes photos</a>
+      <button class="lnk" id="refresh" type="button">↻ Actualiser</button>
+    </div>
+  </header>
+
+  <!-- États -->
+  <div class="state" id="loading"><div class="spin"></div>Chargement des souvenirs…</div>
+  <div class="state hidden" id="empty">Aucune photo pour l'instant.<span class="small">Soyez le premier à partager un souvenir !</span></div>
+  <div class="state hidden" id="error">Impossible de charger la galerie.<span class="small" id="errDetail"></span><br><button class="lnk" id="retry" type="button" style="margin-top:14px">Réessayer</button></div>
+
+  <!-- Mosaïque -->
+  <div class="grid hidden" id="grid"></div>
+
+  <footer>Avec amour • <span class="sig" id="footCouple">Alice &amp; Benoît</span></footer>
+</div>
+
+<!-- Lightbox -->
+<div class="lb" id="lb">
+  <button class="lb-close" id="lbClose" aria-label="Fermer">✕</button>
+  <button class="lb-btn lb-prev" id="lbPrev" aria-label="Précédent">‹</button>
+  <div class="lb-media" id="lbMedia"></div>
+  <button class="lb-btn lb-next" id="lbNext" aria-label="Suivant">›</button>
+  <div class="lb-cap" id="lbCap"></div>
+</div>
+
+<script>
+/* ============================================================
+   ⬇️⬇️⬇️  CONFIGURATION — doit correspondre à index.html  ⬇️⬇️⬇️
+   ============================================================ */
+
+// Même URL que dans index.html (Web App Apps Script, finit par /exec).
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw9mlAKJCHQjrzbh4ez0KpJE3VlFkxVhJodWgtBr-Vrfc3NPBUq7dkQee-i02wCj-Hrmg/exec';
+
+const COUPLE_FIRST  = 'Alice';
+const COUPLE_SECOND = 'Benoît';
+const WEDDING_DATE  = '20·06·2026';
+const MONOGRAM      = 'A & B';
+
+/* ============================================================
+   ⬆️⬆️⬆️  FIN DE LA CONFIGURATION  ⬆️⬆️⬆️
+   ============================================================ */
+
+const couple = COUPLE_FIRST + ' & ' + COUPLE_SECOND;
+document.getElementById('couple').innerHTML    = COUPLE_FIRST + ' &amp; ' + COUPLE_SECOND;
+document.getElementById('footCouple').textContent = couple;
+document.getElementById('date').textContent    = WEDDING_DATE;
+document.getElementById('mono2').textContent    = MONOGRAM;
+document.title = 'Galerie — ' + couple;
+
+const grid     = document.getElementById('grid');
+const elLoading = document.getElementById('loading');
+const elEmpty   = document.getElementById('empty');
+const elError   = document.getElementById('error');
+const elCount   = document.getElementById('count');
+
+let files = [];   // { id, name, mimeType, isVideo }
+
+function show(which) {
+  elLoading.classList.toggle('hidden', which !== 'loading');
+  elEmpty.classList.toggle('hidden',   which !== 'empty');
+  elError.classList.toggle('hidden',   which !== 'error');
+  grid.classList.toggle('hidden',      which !== 'grid');
+}
+
+/* ---------- Chargement de la liste ---------- */
+async function load() {
+  show('loading');
+  try {
+    const resp = await fetch(WEB_APP_URL + '?action=list', { redirect: 'follow' });
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.error || 'Erreur serveur');
+
+    files = (data.files || []).map(f => ({
+      id: f.id,
+      name: f.name,
+      mimeType: f.mimeType || '',
+      isVideo: (f.mimeType || '').indexOf('video/') === 0
+    }));
+
+    if (files.length === 0) { show('empty'); elCount.textContent = ''; return; }
+
+    render();
+    show('grid');
+    elCount.textContent = files.length + (files.length > 1 ? ' souvenirs partagés' : ' souvenir partagé');
+  } catch (err) {
+    document.getElementById('errDetail').textContent = String(err.message || err);
+    show('error');
+  }
+}
+
+/* ---------- Construction de la mosaïque ---------- */
+function render() {
+  grid.innerHTML = '';
+  files.forEach((f, i) => {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.addEventListener('click', () => openLightbox(i));
+
+    const img = document.createElement('img');
+    img.loading = 'lazy';
+    img.alt = f.name;
+    // Miniature servie par le CDN Google (fonctionne aussi pour les vidéos).
+    img.src = thumbUrl(f.id, 600);
+    // Si la miniature échoue, on tente une 2e source puis un repli.
+    img.dataset.fallback = '0';
+    img.addEventListener('error', () => onThumbError(img, f));
+    tile.appendChild(img);
+
+    if (f.isVideo) {
+      const play = document.createElement('div');
+      play.className = 'play';
+      play.innerHTML = '<span>▶</span>';
+      tile.appendChild(play);
+    }
+
+    grid.appendChild(tile);
+  });
+}
+
+function thumbUrl(id, w) {
+  return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + w;
+}
+
+function onThumbError(img, f) {
+  const step = img.dataset.fallback;
+  if (step === '0') {
+    // 2e source : CDN lh3.
+    img.dataset.fallback = '1';
+    img.src = 'https://lh3.googleusercontent.com/d/' + f.id + '=w600';
+  } else {
+    // Repli : tuile sobre (surtout pour les vidéos non encore traitées).
+    img.dataset.fallback = '2';
+    img.removeAttribute('src');
+    const tile = img.parentElement;
+    img.remove();
+    const fb = document.createElement('div');
+    fb.className = 'vidfallback';
+    fb.textContent = f.isVideo ? '🎬' : '🖼';
+    tile.insertBefore(fb, tile.firstChild);
+  }
+}
+
+/* ---------- Lightbox ---------- */
+const lb = document.getElementById('lb');
+const lbMedia = document.getElementById('lbMedia');
+const lbCap = document.getElementById('lbCap');
+let current = 0;
+
+function openLightbox(i) {
+  current = i;
+  renderLightbox();
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  lb.classList.remove('open');
+  lbMedia.innerHTML = '';   // stoppe une éventuelle vidéo
+  document.body.style.overflow = '';
+}
+function step(d) {
+  current = (current + d + files.length) % files.length;
+  renderLightbox();
+}
+function renderLightbox() {
+  const f = files[current];
+  if (f.isVideo) {
+    // Lecteur Drive intégré (le fichier est partagé "par lien").
+    lbMedia.innerHTML = '<iframe src="https://drive.google.com/file/d/' + f.id +
+      '/preview" allow="autoplay" allowfullscreen></iframe>';
+  } else {
+    lbMedia.innerHTML = '<img alt="" src="https://lh3.googleusercontent.com/d/' + f.id + '=w1920">';
+  }
+  lbCap.textContent = (current + 1) + ' / ' + files.length;
+}
+
+document.getElementById('lbClose').addEventListener('click', closeLightbox);
+document.getElementById('lbPrev').addEventListener('click', () => step(-1));
+document.getElementById('lbNext').addEventListener('click', () => step(1));
+lb.addEventListener('click', (e) => { if (e.target === lb) closeLightbox(); });
+document.addEventListener('keydown', (e) => {
+  if (!lb.classList.contains('open')) return;
+  if (e.key === 'Escape') closeLightbox();
+  else if (e.key === 'ArrowLeft') step(-1);
+  else if (e.key === 'ArrowRight') step(1);
+});
+
+document.getElementById('refresh').addEventListener('click', load);
+document.getElementById('retry').addEventListener('click', load);
+
+load();
+</script>
+</body>
+</html>
