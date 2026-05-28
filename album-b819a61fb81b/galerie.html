@@ -195,6 +195,14 @@
   @media (min-width: 620px) { .grid .col { gap: 14px; } }
   @media (min-width: 920px) { .grid .col { gap: 16px; } }
 
+  /* Sentinelle de défilement infini */
+  .sentinel { height: 1px; width: 100%; }
+  .sentinel.loading::after {
+    content: ""; display: block; width: 26px; height: 26px; margin: 24px auto;
+    border-radius: 50%; border: 2.5px solid var(--line); border-top-color: var(--accent-d);
+    animation: spin .9s linear infinite;
+  }
+
   .tile {
     position: relative;
     border-radius: var(--radius); overflow: hidden; cursor: pointer;
@@ -329,11 +337,17 @@
     position: absolute; bottom: 0; left: 0; right: 0;
     padding: 20px 16px;
     padding-bottom: calc(20px + env(safe-area-inset-bottom));
-    display: flex; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; gap: 11px;
     pointer-events: none;
     background: linear-gradient(0deg, rgba(0,0,0,.55) 0%, transparent 100%);
   }
   .lb-bottom > * { pointer-events: auto; }
+  .lb-meta {
+    color: rgba(255,255,255,.85); font-size: 13px; letter-spacing: .2px; text-align: center;
+    text-shadow: 0 1px 6px rgba(0,0,0,.5); padding: 0 50px;
+  }
+  .lb-meta .who { font-weight: 500; }
+  .lb-meta .when { color: rgba(255,255,255,.62); }
   .lb-dl {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 11px 22px; border-radius: 999px;
@@ -432,6 +446,7 @@
   <div class="lb-media" id="lbMedia"></div>
   <button class="lb-btn lb-next" id="lbNext" aria-label="Suivant">›</button>
   <div class="lb-bottom">
+    <div class="lb-meta" id="lbMeta"></div>
     <a class="lb-dl" id="lbDl" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12m-5-5 5 5 5-5M5 20h14"/></svg>
       Télécharger
@@ -480,6 +495,12 @@ const elCounter  = document.getElementById('counter');
 const refreshBtn = document.getElementById('refresh');
 
 let files = [];
+let nextPageToken = null;
+let loading = false;
+let reachedEnd = false;
+let colEls = [];
+let currentColumns = 0;
+let sentinel = null, io = null;
 
 function show(which) {
   elLoading.classList.toggle('hidden', which !== 'loading');
@@ -495,35 +516,73 @@ function setCounter(n) {
   elCounter.classList.add('show');
 }
 
-/* ---------- Chargement de la liste ---------- */
+/* ---------- Chargement par pages (défilement infini) ---------- */
+async function fetchPage(token) {
+  const url = WEB_APP_URL + '?action=list' + (token ? '&pageToken=' + encodeURIComponent(token) : '');
+  const resp = await fetch(url, { redirect: 'follow' });
+  const data = await resp.json();
+  if (!data.ok) throw new Error(data.error || 'Erreur serveur');
+  const list = (data.files || [])
+    .filter(f => (f.mimeType || '').indexOf('image/') === 0)
+    .map(f => ({ id: f.id, name: f.name, mimeType: f.mimeType || '', created: f.created || 0, guest: f.guest || '' }));
+  return { files: list, next: data.nextPageToken || null };
+}
+
 async function load(isRefresh) {
+  if (loading) return;
+  loading = true;
+  // Réinitialisation complète
+  files = []; nextPageToken = null; reachedEnd = false; colEls = []; currentColumns = 0;
+  grid.innerHTML = '';
   if (isRefresh) refreshBtn.classList.add('spinning');
   else show('loading');
 
   try {
-    const resp = await fetch(WEB_APP_URL + '?action=list', { redirect: 'follow' });
-    const data = await resp.json();
-    if (!data.ok) throw new Error(data.error || 'Erreur serveur');
-
-    // Galerie photos uniquement
-    files = (data.files || [])
-      .filter(f => (f.mimeType || '').indexOf('image/') === 0)
-      .map(f => ({ id: f.id, name: f.name, mimeType: f.mimeType || '' }));
-
-    if (files.length === 0) {
-      setCounter(0);
-      show('empty');
-    } else {
-      setCounter(files.length);
-      render();
-      show('grid');
+    const page = await fetchPage(null);
+    if (page.files.length === 0 && !page.next) {
+      setCounter(0); show('empty'); return;
     }
+    appendFiles(page.files);
+    nextPageToken = page.next; reachedEnd = !nextPageToken;
+    show('grid');
+    setCounter(files.length);
+    ensureSentinel();
+    maybeLoadMore();          // si l'écran n'est pas rempli, enchaîner les pages
   } catch (err) {
     document.getElementById('errDetail').textContent = String(err.message || err);
     show('error');
   } finally {
+    loading = false;
     refreshBtn.classList.remove('spinning');
   }
+}
+
+async function loadMore() {
+  if (loading || reachedEnd || !nextPageToken) return;
+  loading = true;
+  if (sentinel) sentinel.classList.add('loading');
+  try {
+    const page = await fetchPage(nextPageToken);
+    appendFiles(page.files);
+    nextPageToken = page.next; reachedEnd = !nextPageToken;
+    setCounter(files.length);
+  } catch (err) {
+    /* silencieux : on réessaiera au prochain défilement */
+  } finally {
+    loading = false;
+    if (sentinel) {
+      sentinel.classList.remove('loading');
+      if (reachedEnd) sentinel.classList.add('done');
+    }
+    maybeLoadMore();
+  }
+}
+
+// Continue à charger tant que la sentinelle reste visible (écran pas encore rempli).
+function maybeLoadMore() {
+  if (reachedEnd || !sentinel || loading) return;
+  const r = sentinel.getBoundingClientRect();
+  if (r.top < window.innerHeight + 400) loadMore();
 }
 
 /* ---------- Construction de la mosaïque ---------- */
@@ -567,33 +626,59 @@ function buildTile(f, i) {
   return tile;
 }
 
-let currentColumns = 0;
-function render(force) {
-  const cols = getColumnCount();
-  if (!force && cols === currentColumns && grid.childElementCount) return;
-  currentColumns = cols;
-
+// Crée les colonnes vides selon le breakpoint courant.
+function buildColumns() {
+  currentColumns = getColumnCount();
   grid.innerHTML = '';
-  const colEls = [];
-  for (let c = 0; c < cols; c++) {
+  colEls = [];
+  for (let c = 0; c < currentColumns; c++) {
     const col = document.createElement('div');
     col.className = 'col';
     grid.appendChild(col);
     colEls.push(col);
   }
-  // Round-robin : items 0,4,8… → col 0 ; 1,5,9… → col 1 ; etc.
-  // Équilibre naturellement gauche/droite même avec un nombre d'items non multiple.
-  files.forEach((f, i) => {
-    colEls[i % cols].appendChild(buildTile(f, i));
-  });
 }
 
-// Redistribue quand on change de breakpoint (ex: rotation, redimensionnement)
+// Ajoute les vignettes des fichiers d'indice [from, to[ (round-robin continu : i % cols).
+function appendTiles(from, to) {
+  for (let i = from; i < to; i++) {
+    colEls[i % currentColumns].appendChild(buildTile(files[i], i));
+  }
+}
+
+// Ajoute un lot de fichiers : crée les colonnes au 1er lot, sinon n'ajoute que le nouveau lot.
+function appendFiles(newFiles) {
+  const start = files.length;
+  newFiles.forEach(f => files.push(f));
+  if (!colEls.length) {
+    buildColumns();
+    appendTiles(0, files.length);
+  } else {
+    appendTiles(start, files.length);
+  }
+}
+
+// Sentinelle de bas de page + observateur pour le défilement infini.
+function ensureSentinel() {
+  if (sentinel) return;
+  sentinel = document.createElement('div');
+  sentinel.className = 'sentinel';
+  grid.parentNode.insertBefore(sentinel, grid.nextSibling);
+  io = new IntersectionObserver((entries) => {
+    if (entries.some(e => e.isIntersecting)) loadMore();
+  }, { rootMargin: '600px 0px' });
+  io.observe(sentinel);
+}
+
+// Redistribue quand on change de breakpoint (rotation, redimensionnement).
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
-    if (files.length && getColumnCount() !== currentColumns) render(true);
+    if (files.length && getColumnCount() !== currentColumns) {
+      buildColumns();
+      appendTiles(0, files.length);
+    }
   }, 180);
 });
 
@@ -642,12 +727,40 @@ function step(d) {
 function renderLightbox() {
   const f = files[current];
   lbMedia.innerHTML = '<img alt="" src="' + fullUrl(f.id) + '">';
-  lbCounter.innerHTML = (current + 1) + ' <span class="total">/ ' + files.length + '</span>';
+  lbCounter.innerHTML = (current + 1) + ' <span class="total">/ ' + files.length + (reachedEnd ? '' : '+') + '</span>';
   lbDl.href = downloadUrl(f.id);
   lbDl.setAttribute('download', f.name);
+  renderMeta(f);
   // Préchargement des voisins pour navigation fluide
   preload((current + 1) % files.length);
   preload((current - 1 + files.length) % files.length);
+  // Charge la suite si on approche de la fin des photos déjà chargées.
+  if (!reachedEnd && current >= files.length - 6) loadMore();
+}
+
+// Affiche l'auteur (si renseigné) et la date. textContent => aucune injection HTML possible.
+function renderMeta(f) {
+  const meta = document.getElementById('lbMeta');
+  meta.textContent = '';
+  if (f.guest) {
+    const who = document.createElement('span');
+    who.className = 'who';
+    who.textContent = 'Partagé par ' + f.guest;
+    meta.appendChild(who);
+  }
+  const dateStr = f.created
+    ? new Date(f.created).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '';
+  if (dateStr) {
+    if (f.guest) {
+      const sep = document.createElement('span');
+      sep.className = 'sep'; sep.textContent = ' · ';
+      meta.appendChild(sep);
+    }
+    const when = document.createElement('span');
+    when.className = 'when'; when.textContent = dateStr;
+    meta.appendChild(when);
+  }
 }
 function preload(i) {
   const f = files[i]; if (!f) return;
