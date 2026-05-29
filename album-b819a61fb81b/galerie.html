@@ -509,12 +509,15 @@ function show(which) {
   grid.classList.toggle('hidden',      which !== 'grid');
 }
 
-function setCounter(n) {
-  if (n <= 0) { elCounter.classList.remove(‘show’); elCounter.textContent = ‘’; return; }
-  const plus = reachedEnd ? ‘’ : ‘+’;
-  const label = (n > 1 || !reachedEnd) ? ‘souvenirs partagés’ : ‘souvenir partagé’;
-  elCounter.innerHTML = ‘<strong>’ + n + plus + ‘</strong> ‘ + label;
-  elCounter.classList.add(‘show’);
+let knownTotal = null;
+
+function setCounter(loaded, total) {
+  if (total != null) knownTotal = total;
+  const n = knownTotal != null ? knownTotal : loaded;
+  if (n <= 0) { elCounter.classList.remove("show"); elCounter.textContent = ""; return; }
+  const label = n > 1 ? "souvenirs partagés" : "souvenir partagé";
+  elCounter.innerHTML = "<strong>" + n + "<\/strong> " + label;
+  elCounter.classList.add("show");
 }
 
 /* ---------- Chargement par pages (défilement infini) ---------- */
@@ -539,16 +542,20 @@ async function load(isRefresh) {
   else show('loading');
 
   try {
-    const page = await fetchPage(null);
+    const [page, countResp] = await Promise.all([
+      fetchPage(null),
+      fetch(WEB_APP_URL + "?action=count", { redirect: "follow" }).then(r => r.json()).catch(() => null)
+    ]);
+    const serverTotal = countResp && countResp.ok ? countResp.total : null;
     if (page.files.length === 0 && !page.next) {
-      setCounter(0); show('empty'); return;
+      setCounter(0, serverTotal); show("empty"); return;
     }
     appendFiles(page.files);
     nextPageToken = page.next; reachedEnd = !nextPageToken;
-    show('grid');
-    setCounter(files.length);
+    show("grid");
+    setCounter(files.length, serverTotal);
     ensureSentinel();
-    maybeLoadMore();          // si l'écran n'est pas rempli, enchaîner les pages
+    maybeLoadMore();
   } catch (err) {
     document.getElementById('errDetail').textContent = String(err.message || err);
     show('error');
