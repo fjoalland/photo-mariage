@@ -510,10 +510,11 @@ function show(which) {
 }
 
 function setCounter(n) {
-  if (n <= 0) { elCounter.classList.remove('show'); elCounter.textContent = ''; return; }
-  elCounter.innerHTML = '<strong>' + n + '</strong> ' +
-    (n > 1 ? 'souvenirs partagés jusqu’ici' : 'souvenir partagé jusqu’ici');
-  elCounter.classList.add('show');
+  if (n <= 0) { elCounter.classList.remove(‘show’); elCounter.textContent = ‘’; return; }
+  const plus = reachedEnd ? ‘’ : ‘+’;
+  const label = (n > 1 || !reachedEnd) ? ‘souvenirs partagés’ : ‘souvenir partagé’;
+  elCounter.innerHTML = ‘<strong>’ + n + plus + ‘</strong> ‘ + label;
+  elCounter.classList.add(‘show’);
 }
 
 /* ---------- Chargement par pages (défilement infini) ---------- */
